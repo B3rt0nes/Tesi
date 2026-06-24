@@ -83,15 +83,15 @@
 \vspace{10mm}
 
 \begin{minipage}[t]{0.40\textwidth}
-{\Large{\bf Relatore: \\ Chiar.mo Prof.\\ Nome Cognome}}
+{\Large{\bf Relatore: \\ Chiar.mo Prof.\\ Fabio Vitali}}
 
 \vspace{3mm}
 
-{\Large{\bf Correlatore: \\ Chiar.mo Prof.\\ Nome Cognome}}
+% {\Large{\bf Correlatore: \\ Chiar.mo Prof.\\ Nome Cognome}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.40\textwidth}\raggedleft
-{\Large{\bf Presentata da: \\ Nome Cognome}}
+{\Large{\bf Presentata da: \\ Alberto Zuccari}}
 \end{minipage}
 
 \vspace{30mm}
@@ -99,8 +99,8 @@
 \rule[0.5cm]{15.8cm}{0.6mm}
 
 \begin{center}
-{\large{\bf Sessione mese anno \\}}
-{\large{\bf Anno Accademico 20xx/20xx\\}}
+{\large{\bf Sessione Luglio 2026 \\}}
+{\large{\bf Anno Accademico 2025/2026\\}}
 \end{center}
 
 \end{titlepage}
@@ -160,60 +160,34 @@ Abstract qui (ti consiglio di farlo alla fine)
 \pagestyle{plain}
 \setcounter{page}{1}
 
-(Io l'introduzione l'ho scritta alla fine)\\
-bla bla bla
-\section{elenchi}
-\subsection{Elenchi puntati}
-\begin{itemize}
-    \item bla
-    \begin{itemize}
-        \item sub-bla
-    \end{itemize}
-    \item bla
-\end{itemize}
+\section{Fedora}
+Fedora è un progetto open source di DuraSpace. FEDORA sta per Flexible Extensible
+Digital Object Repository Architecture ed è un software per la gestione di repository
+digitali. FEDORA è progettato per supportare la creazione, la gestione e la conservazione 
+a lungo termine di oggetti digitali.
+Supporta relazioni semantiche complesse tra oggetti dentro e fuori le repository utilizzando RDF.
 
-\subsection{Elenchi numerati}
-\begin{enumerate}
-    \item bla1
-    \begin{enumerate}
-        \item sub bla 1
-        \item sub bla 2
-    \end{enumerate}
-    \item bla 2
-\end{enumerate}
+Fedora è middleware, il che significa che fornisce un'interfaccia per accedere e gestire 
+i dati, ma non si occupa direttamente della memorizzazione dei dati stessi. 
+Invece, si integra con vari sistemi di archiviazione e database per garantire la scalabilità 
+e la flessibilità nella gestione dei repository digitali.
 
-\subsection{Mix}
-\begin{itemize}
-    \item bla
-    \begin{enumerate}
-        \item sub bla 1
-    \end{enumerate}
-    \item bla
-\end{itemize}
+Si possono costruire framework personalizzati sopra Fedora, oppure ci si può unire ad una
+comunità broader come samvera, che è un framework per la gestione di repository digitali 
+che utilizza Fedora come sistema di gestione dei dati sottostante. 
+Samvera fornisce una serie di strumenti e componenti predefiniti per facilitare la creazione 
+di repository digitali, inclusi modelli di dati, interfacce utente e funzionalità di ricerca.
 
-\begin{enumerate}
-    \item bla 1
-    \begin{itemize}
-        \item sub bla
-    \end{itemize}
-    \item bla 2
-\end{enumerate}
+\subsection{RDF}
+RDF (Resource Description Framework) è un modello di dati standard per rappresentare 
+informazioni su risorse in modo strutturato e semantico. RDF utilizza una struttura a tripla, 
+composta da \textbf{soggetto}, \textbf{predicato} e \textbf{oggetto}, per descrivere le 
+relazioni tra le risorse. 
 
-\section{Font}
-\textbf{bla bla bla}\\
-\textit{Ancora bla bla bla}\\
-\texttt{bla bla ma in un'altra riga}
+Un veloce esempio di una tripla RDF potrebbe essere: 
+"Il libro 'La Divina Commedia' è scritto da Dante Alighieri", 
+dove \textit{"Il libro 'La Divina Commedia'"} è il soggetto, "è scritto da" è il predicato e "Dante Alighieri" è l'oggetto. RDF è ampiamente utilizzato per rappresentare dati su Internet e per facilitare l'integrazione e la condivisione di informazioni tra diverse fonti.
 
-\subsection{Sottosezione 1 - parskip}
-Grazie al package parskip se vai a capo nel .tex lasciando una riga
-
-ti mette un po' di spazio anche nel pdf.\\
-Attenzione però che ogni tanto questa feature fa lasciare troppo spazio tra testo e immagini / tabelle, se capita prova a togliere un po' di righe vuote. \\
-Senza questo pacchetto, una doppia new line (\texttt{$\backslash n\backslash n$}) crea un nuovo paragrafo, la cui prima riga viene leggermente indentata (un comportamento indesiderato se vieni da altri strumenti di stesura). Eventualmente, si può usare per allungare di qualche pagina alla tesi, evitando di abusarne.
-\subsection{Sottosezione 2 - capitoli}
-I capitoli iniziano sempre in una pagina dispari, quindi a volte vedrai delle pagine bianche tra uno e l'altro
-\subsubsection{Sottosottosezione 1} \label{subsub:bla}
-bla bla bla
 
 \chapter{Dopo l'introduzione}
 qua scrivi qualcosa
