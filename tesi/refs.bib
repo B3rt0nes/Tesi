@@ -1,10 +1,39 @@
-@article{greenwade93,
-    author  = "George D. Greenwade",
-    title   = "The {C}omprehensive {T}ex {A}rchive {N}etwork ({CTAN})",
-    year    = "1993",
-    journal = "TUGBoat",
-    volume  = "14",
-    number  = "3",
-    pages   = "342--351"
+% =============================================================================
+% refs.bib - File bibliografico della tesi
+%
+% REGOLE DI VITALI (vedi commento in tesi.tex per la versione completa):
+%   - Chiave nel formato [XYZ99]: iniziali cognomi + ultime 2 cifre anno
+%   - Articolo/capitolo: titolo tra "virgolette"  →  title = {"Il titolo"}
+%   - Libro/sito:        titolo in corsivo        →  title = {{\em Il titolo}}
+%   - URL:               aggiungere               →  note = {Ultima visita: GG/MM/AAAA}
+% =============================================================================
+
+% --- ESEMPIO DI ARTICOLO ---
+@article{Gre93,
+  author  = {Greenwade, George D.},
+  title   = {"The {C}omprehensive {T}ex {A}rchive {N}etwork ({CTAN})"},
+  year    = {1993},
+  journal = {TUGBoat},
+  volume  = {14},
+  number  = {3},
+  pages   = {342--351}
 }
 
+% --- ESEMPIO DI LIBRO ---
+@book{Ros12,
+  author    = {Rosenfeld L., Morville P.},
+  title     = {{\em Information Architecture}},
+  publisher = {O'Reilly Media},
+  year      = {2012},
+}
+
+% --- ESEMPIO DI SITO WEB ---
+@misc{W3C24,
+  author = {{W3C}},
+  title  = {{\em Web Content Accessibility Guidelines (WCAG)}},
+  url    = {https://www.w3.org/WAI/standards-guidelines/wcag/},
+  year   = {2024},
+  note   = {Ultima visita: 24/06/2026},
+}
+
+% Aggiungi qui le tue voci bibliografiche seguendo le regole di Vitali.
