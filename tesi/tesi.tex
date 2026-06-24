@@ -1,4 +1,3 @@
-% =============================================================================
 %  TESI DI LAUREA - Università di Bologna
 %  Struttura conforme alle linee guida del Prof. Fabio Vitali
 %  Autore: Alberto Zuccari
@@ -68,7 +67,7 @@
     inputencoding=utf8,
     extendedchars=true,
     literate=%
-        {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+        {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`\i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
         {À}{{\`A}}1 {È}{{\`E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1,
 }
 
@@ -88,7 +87,7 @@
 % =============================================================================
 % COMANDI CUSTOM
 % =============================================================================
-\newcommand{\rom}[1]{\uppercase\expandafter{\romannumeral #1\relax}}
+\newcommand{\rom}[1]{\MakeUppercase{\romannumeral#1\relax}}
 
 % =============================================================================
 % BIBLIOGRAFIA - Stile ALPHA (linee guida Vitali)
@@ -169,8 +168,7 @@
 % {\Large{\bf Correlatore: \\ Chiar.mo Prof.\\ Nome Cognome}}
 \end{minipage}
 \hfill
-\begin{minipage}[t]{0.40\textwidth}\raggedleft
-{\Large{\bf Presentata da: \\ Alberto Zuccari}}
+\begin{minipage}[t]{0.40\textwidth}\raggedleft{\Large{\bf Presentata da: \\ Alberto Zuccari}}
 \end{minipage}
 
 \vspace{30mm}
@@ -187,8 +185,7 @@
 % =============================================================================
 % PAGINA DELLE PAROLE CHIAVE (DA COMPLETARE ALLA FINE)
 % =============================================================================
-\restoregeometry
-\newpage
+\restoregeometry\newpage
 \begin{center}
     (DA FARE ALLA FINE)\\
     5 parole chiave per caratterizzare il contenuto della dissertazione:
@@ -245,8 +242,7 @@ Abstract qui (da completare alla fine).
 % =============================================================================
 \pagenumbering{arabic}
 \setcounter{page}{1}
-\raggedbottom
-\pagestyle{plain}
+\raggedbottom\pagestyle{plain}
 
 
 % =============================================================================
@@ -254,7 +250,7 @@ Abstract qui (da completare alla fine).
 % (Linee guida Vitali: vedi capitoli/capitolo0_introduzione.tex)
 % =============================================================================
 \setcounter{chapter}{-1}  % Rende questo il Capitolo 0
-\chapter{Introduzione} \label{chap:intro}
+\chapter{Introduzione}\label{chap:intro}
 \input{capitoli/capitolo0_introduzione}
 
 
@@ -262,7 +258,7 @@ Abstract qui (da completare alla fine).
 % CAPITOLO 1: CONTESTO SCIENTIFICO E TECNOLOGICO
 % (Linee guida Vitali: vedi capitoli/capitolo1_contesto.tex)
 % =============================================================================
-\chapter{Contesto scientifico e tecnologico} \label{chap:contesto}
+\chapter{Contesto scientifico e tecnologico}\label{chap:contesto}
 \input{capitoli/capitolo1_contesto}
 
 
@@ -270,7 +266,7 @@ Abstract qui (da completare alla fine).
 % CAPITOLO 2: IL PROTOTIPO - ASTRAZIONE E FUNZIONALITA'
 % (Linee guida Vitali: vedi capitoli/capitolo2_prototipo.tex)
 % =============================================================================
-\chapter{Il prototipo: astrazione e funzionalità} \label{chap:prototipo}
+\chapter{Il prototipo: astrazione e funzionalità}\label{chap:prototipo}
 \input{capitoli/capitolo2_prototipo}
 
 
@@ -278,7 +274,7 @@ Abstract qui (da completare alla fine).
 % CAPITOLO 3: ARCHITETTURA E DETTAGLI IMPLEMENTATIVI
 % (Linee guida Vitali: vedi capitoli/capitolo3_implementazione.tex)
 % =============================================================================
-\chapter{Architettura e dettagli implementativi} \label{chap:implementazione}
+\chapter{Architettura e dettagli implementativi}\label{chap:implementazione}
 \input{capitoli/capitolo3_implementazione}
 
 
@@ -286,7 +282,7 @@ Abstract qui (da completare alla fine).
 % CAPITOLO 4: VALUTAZIONE
 % (Linee guida Vitali: vedi capitoli/capitolo4_valutazione.tex)
 % =============================================================================
-\chapter{Valutazione} \label{chap:valutazione}
+\chapter{Valutazione}\label{chap:valutazione}
 \input{capitoli/capitolo4_valutazione}
 
 
@@ -294,7 +290,7 @@ Abstract qui (da completare alla fine).
 % CAPITOLO 5: CONCLUSIONI E SVILUPPI FUTURI
 % (Linee guida Vitali: vedi capitoli/capitolo5_conclusioni.tex)
 % =============================================================================
-\chapter{Conclusioni e sviluppi futuri} \label{chap:conclusioni}
+\chapter{Conclusioni e sviluppi futuri}\label{chap:conclusioni}
 \input{capitoli/capitolo5_conclusioni}
 
 
@@ -315,6 +311,7 @@ Abstract qui (da completare alla fine).
 \renewcommand{\bibsection}{}
 \chapter*{Riferimenti bibliografici}
 \addcontentsline{toc}{chapter}{Riferimenti bibliografici}
+\nocite{*}   % Include tutti i riferimenti da refs.bib anche senza \cite espliciti
 \bibliography{refs}
 \newpage
 
@@ -329,12 +326,10 @@ Abstract qui (da completare alla fine).
 \pagenumbering{gobble}
 \begin{appendices}
 
-\chapter{Appendice A}
-\label{Appendice:A}
+\chapter{Appendice A}\label{Appendice:A}
 % Inserisci qui il contenuto dell'Appendice A.
 
-\chapter{Appendice B}
-\label{Appendice:B}
+\chapter{Appendice B}\label{Appendice:B}
 % Inserisci qui il contenuto dell'Appendice B.
 
 % Esempio embed PDF:
