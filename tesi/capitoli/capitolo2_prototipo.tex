@@ -1,38 +1,411 @@
 % =============================================================================
 % capitolo2_prototipo.tex
-% Capitolo 2: Il prototipo - Astrazione e Funzionalita'
+% Capitolo 2: Il Prototipo - Astrazione e Funzionalita'
 %
 % LINEE GUIDA VITALI:
 %  Questo capitolo e' dedicato al "COSA" e al "PERCHE'": NON al "COME".
 %  Il lettore deve capire il sistema senza conoscere i dettagli tecnici.
+%  Il Cap. 3 (implementazione) si occupera' del COME.
 %
-%  A) PANORAMICA AD ALTO LIVELLO:
-%     Cosa fa il sistema, a cosa serve, per chi e' pensato.
-%     Un diagramma a blocchi (block diagram) e' molto utile qui.
-%
-%  B) CASI D'USO:
-%     Scenari d'uso principali con attori e azioni.
-%     Puoi usare tabelle, diagrammi UML use-case, o elenchi narrativi.
-%     NON descrivere come sono implementati: solo cosa fanno.
-%
-%  C) INTERFACCIA UTENTE / API:
-%     Mostra screenshot, wireframe, o esempi di API (se applicabile).
-%     Spiega come si usa il sistema dal punto di vista dell'utente finale.
-%
-%  ATTENZIONE: Nessun dettaglio implementativo in questo capitolo.
-%              Linguaggi, librerie, schemi DB vanno nel Cap. 3.
 %  LUNGHEZZA SUGGERITA: 10-20 pagine.
 % =============================================================================
 
-% --- A. PANORAMICA ---
-% Cosa fa il sistema ad alto livello, a cosa serve, per chi.
-% Includi un diagramma a blocchi se possibile (con tikzpicture o immagine).
 
-% --- B. CASI D'USO ---
-% Elenca i principali use case: attore, precondizioni, flusso principale.
-% NON spiegare COME sono implementati.
+% =============================================================================
+\section{Introduzione al capitolo}
+\label{sec:intro_cap2}
+% =============================================================================
+%
+% [REGOLA DI VITALI - "Di' cosa stai per dire"]
+%
+% Scrivi 3-4 paragrafi introduttivi che fungano da mappa del capitolo.
+%
+% Paragrafo 1 - Il CLAIM del capitolo:
+%   Enunca la tesi specifica di questo capitolo in UNA frase netta.
+%   Esempio: "In questo capitolo presentiamo l'LLM Query Builder come
+%   strumento che abbatte la barriera tecnica tra i ricercatori del
+%   DH.ARC e il Datavault, consentendo l'accesso in linguaggio naturale
+%   a 19 milioni di triple RDF."
+%   La frase deve essere VERIFICABILE: il capitolo deve poi dimostrarla.
+%
+% Paragrafo 2 - Il problema di partenza (motivazione):
+%   Prima di presentare la soluzione, ricorda BREVEMENTE (3-4 righe)
+%   il problema che essa risolve: l'ostacolo tecnico di SPARQL per
+%   i ricercatori umanistici. Collega questo capitolo al Capitolo 1
+%   dove hai presentato il contesto teorico. Usa \cref{chap:contesto}
+%   per riferire il lettore al capitolo precedente.
+%
+% Paragrafo 3 - Struttura del capitolo (la mappa):
+%   Descrivi esplicitamente le sezioni che seguono, in ordine.
+%   Esempio: "Il capitolo e' organizzato come segue: nella
+%   \cref{sec:dominio} descriviamo il profilo degli utenti e i loro
+%   bisogni informativi; nella \cref{sec:ia} analizziamo come la
+%   ricerca semantica modifichi il paradigma di esplorazione del dato;
+%   nella \cref{sec:architettura} presentiamo il flusso funzionale
+%   ad alto livello; nella \cref{sec:casiduso} illustriamo tre scenari
+%   d'uso concreti; la \cref{sec:conclusioni_cap2} conclude il capitolo."
+%   (Assicurati che le label \label{sec:...} siano definite
+%   nelle sezioni corrispondenti qui sotto.)
+%
+% NON iniziare con "In questo capitolo..." come prima parola assoluta:
+% e' una costruzione debole. Parti dal problema o dal contesto.
+%
 
-% --- C. INTERFACCIA / API ---
-% Come si usa il sistema: screenshot, workflow utente, esempi di chiamate.
 
-Scrivi qui il contenuto del capitolo 2 sul prototipo e le sue funzionalita'.
+% =============================================================================
+\section{Il dominio e gli utenti target}
+\label{sec:dominio}
+% =============================================================================
+%
+% Obiettivo: dimostrare che esiste un reale bisogno non soddisfatto.
+% Chi sono questi utenti? Cosa vogliono fare? Perche' non riescono?
+%
+
+\subsection{Il DH.ARC e il Datavault}
+\label{subsec:dharc}
+%
+% Paragrafo 1 - Cos'e' il DH.ARC:
+%   Presenta in 4-6 righe il laboratorio DH.ARC (Digital Humanities
+%   Advanced Research Centre) dell'Universita' di Bologna.
+%   Qual e' la sua missione? Di cosa si occupa?
+%   Perche' produce e gestisce dati strutturati a lungo termine?
+%   Cita la fonte ufficiale con \cite{...} se disponibile.
+%
+% Paragrafo 2 - Il Datavault come asset digitale:
+%   Descrivi il Datavault: un triplestore Blazegraph contenente
+%   circa 19 milioni di triple RDF. Spiega brevemente cosa rappresentano
+%   quelle triple (metadati di risorse digitali: immagini, documenti,
+%   oggetti culturali acquisiti digitalmente).
+%   Usa dati concreti: quante risorse, quali tipologie, da quali
+%   progetti provengono (es. digitalizzazioni di manoscritti, fotografie
+%   di reperti archeologici, ecc.) -- dati che conosci dal tuo lavoro.
+%   Questo rende il capitolo autentico e non generico.
+%
+
+\subsection{Il profilo degli utenti: i ricercatori umanistici}
+\label{subsec:utenti}
+%
+% Paragrafo 1 - Chi sono questi ricercatori:
+%   Descrivi il profilo tipico dell'utente del sistema: un ricercatore
+%   o studente di discipline umanistiche (storia dell'arte, filologia,
+%   archeologia, digital humanities). Quali sono le sue competenze?
+%   Conosce bene il dominio disciplinare, ma NON e' un informatico.
+%   Ha familiarita' con strumenti di ricerca tradizionali (cataloghi,
+%   archivi, banche dati bibliografiche) ma non con linguaggi di query.
+%
+% Paragrafo 2 - I bisogni informativi:
+%   Elenca in modo narrativo (non come bullet list) le domande tipiche
+%   che un ricercatore del DH.ARC vuole fare ai propri dati.
+%   Esempio di domande: "Quante immagini di manoscritti del XIII secolo
+%   sono state acquisite con fotocamera Sony?", "Mostrami tutte le
+%   risorse relative al progetto X scansionate nel 2023."
+%   Queste domande guidano tutta la progettazione del sistema.
+%   (Approfondisci nella \cref{sec:casiduso})
+%
+% Paragrafo 3 - La barriera di SPARQL:
+%   Spiega perche' SPARQL e' un ostacolo insormontabile per questi utenti.
+%   Argomenta su tre livelli:
+%   (a) COGNITIVO: la sintassi dichiarativa e' controintuitiva per chi
+%       non ha mai programmato; richiedere la conoscenza dei prefissi
+%       ontologici (dc:, exif:, ebucore:, ldp:...) equivale a chiedere
+%       a un bibliotecario di scrivere SQL.
+%   (b) STRUTTURALE: il grafo RDF non ha uno schema rigido visibile;
+%       il ricercatore non sa "quali proprieta' esistono" ne' come si
+%       chiamano esattamente nell'ontologia del Datavault.
+%   (c) PRATICO: ogni piccolo errore di sintassi restituisce un insieme
+%       vuoto di risultati senza un messaggio di errore comprensibile,
+%       rendendo il debugging impossibile per un non esperto.
+%   Questa analisi giustifica l'esistenza del sistema che presenti.
+%   Puoi supportare la tesi con letteratura: cerca articoli sull'
+%   "usability of SPARQL endpoints" o "natural language interfaces to
+%   knowledge graphs" e citali con \cite{...}.
+%
+
+
+% =============================================================================
+\section{Information Architecture e Trovabilita'}
+\label{sec:ia}
+% =============================================================================
+%
+% Obiettivo: ancorare il tuo lavoro a una teoria riconosciuta
+% (Morville e Rosenfeld) e dimostrare che l'LLM Query Builder
+% non e' solo un trucco tecnico, ma una scelta di design motivata.
+%
+
+\subsection{Il paradigma classico: navigazione e filtri}
+\label{subsec:paradigma_classico}
+%
+% Paragrafo 1 - L'Information Architecture tradizionale:
+%   Introduce il concetto di Information Architecture (IA) secondo
+%   Morville e Rosenfeld \cite{Ros12} (gia' nel tuo refs.bib).
+%   Riassumi in 4-5 righe i quattro sistemi fondamentali dell'IA:
+%   organizzazione, etichettatura, navigazione, ricerca.
+%   L'obiettivo e' mostrare al lettore che hai un quadro teorico di
+%   riferimento solido, non che stai improvvisando.
+%
+% Paragrafo 2 - Come funzionava la ricerca nel Datavault PRIMA:
+%   Descrivi come si interrogava il Datavault prima del tuo sistema.
+%   Probabilmente tramite form con filtri fissi o SPARQL diretto.
+%   Quali sono i limiti di questo approccio?
+%   - Richiede che l'utente conosca in anticipo i valori possibili
+%     (es. il nome esatto del progetto, la sigla del dispositivo).
+%   - Non gestisce la sinonimia e la vaghezza del linguaggio naturale.
+%   - Non supporta query multi-criterio espresse in modo fluido.
+%   Questo crea quella che Morville chiama "trovabilita'" (findability)
+%   ridotta: le informazioni esistono ma non sono raggiungibili.
+%
+
+\subsection{Il nuovo paradigma: ricerca semantica con LLM}
+\label{subsec:paradigma_semantico}
+%
+% Paragrafo 1 - Cosa cambia con un LLM come interfaccia:
+%   Spiega come un Large Language Model usato come "traduttore"
+%   dal linguaggio naturale a SPARQL modifichi radicalmente il
+%   paradigma di esplorazione dei dati.
+%   Il ricercatore non deve piu' adattarsi alla macchina (imparare
+%   SPARQL): e' la macchina che si adatta al ricercatore (capisce
+%   l'italiano naturale e produce la query corretta).
+%   Questo sposta la complessita' dall'utente al sistema.
+%
+% Paragrafo 2 - Trovabilita' aumentata:
+%   Collega esplicitamente il tuo sistema al concetto di "findability"
+%   di Morville \cite{Ros12}: l'obiettivo e' che una risorsa digitale
+%   presente nel Datavault sia EFFETTIVAMENTE trovabile dall'utente,
+%   non solo formalmente accessibile tramite SPARQL.
+%   Argomenta che la ricerca semantica aumenta la trovabilita' perche':
+%   (a) abbassa la soglia di accesso (chiunque puo' fare una domanda),
+%   (b) gestisce la vaghezza e l'ambiguita' del linguaggio,
+%   (c) permette query complesse che i form tradizionali non supportano.
+%
+% Paragrafo 3 - Limiti di questo approccio (essere onesti):
+%   Un buon accademico presenta anche i limiti. Cita BREVEMENTE (2-3
+%   righe) le limitazioni del paradigma LLM-based: allucinazioni
+%   possibili, dipendenza dalla qualita' del prompt di sistema,
+%   costo computazionale. Questi verranno approfonditi nel Cap. 4
+%   (Valutazione). Usa \cref{chap:valutazione} per rimandare.
+%
+
+
+% =============================================================================
+\section{Architettura Funzionale (Ad alto livello)}
+\label{sec:architettura}
+% =============================================================================
+%
+% ATTENZIONE: NESSUN DETTAGLIO IMPLEMENTATIVO IN QUESTA SEZIONE.
+% Nessun linguaggio di programmazione, nessuna libreria, nessun codice.
+% Quelle informazioni vanno nel Cap. 3 (\cref{chap:implementazione}).
+% Qui si spiega COSA fa il sistema e COME APPARE all'utente.
+%
+
+\subsection{Il flusso dell'interazione}
+\label{subsec:flusso}
+%
+% Paragrafo 1 - Input: il linguaggio naturale:
+%   Descrivi il punto di ingresso del sistema dal punto di vista
+%   dell'utente. L'utente apre l'interfaccia (il DataVault Browser),
+%   trova una barra di ricerca testuale (l'LLM Search Bar) e digita
+%   la sua domanda in italiano (o inglese) in forma libera.
+%   Non ci sono campi da compilare, sintassi da rispettare,
+%   o vocabolari controllati da imparare.
+%   Esempio di input: "Mostrami tutte le immagini scansionate
+%   con una fotocamera Nikon nel 2022."
+%
+% Paragrafo 2 - Elaborazione: la traduzione automatica:
+%   Spiega ad alto livello (SENZA dettagli tecnici) che il testo
+%   naturale viene inviato a un componente intelligente (il modello
+%   LLM) che, guidato da una conoscenza dell'ontologia del Datavault,
+%   produce la query SPARQL corrispondente.
+%   Puoi descrivere questo come una "scatola nera" funzionale:
+%   Input testuale -> [LLM Query Builder] -> Query SPARQL -> Risultati.
+%   I dettagli del "come" sono nel Capitolo 3.
+%
+% Paragrafo 3 - Output: i risultati nel browser:
+%   Descrivi il risultato che l'utente vede: la query SPARQL generata
+%   viene eseguita sul Datavault (Blazegraph) e i risultati vengono
+%   restituiti e visualizzati nell'interfaccia del DataVault Browser
+%   come un albero di risorse navigabile.
+%   L'utente non vede mai la query SPARQL (a meno che non la voglia):
+%   vede solo i risultati pertinenti alla sua domanda.
+%
+
+\subsection{Diagramma funzionale del sistema}
+\label{subsec:diagramma}
+%
+% Paragrafo introduttivo alla figura:
+%   Prima di inserire la figura, scrivi 2-3 righe che la introducano.
+%   Esempio: "La \cref{fig:diagramma_funzionale} sintetizza il flusso
+%   funzionale descritto: l'utente interagisce esclusivamente con
+%   l'interfaccia in linguaggio naturale, mentre la complessita'
+%   della traduzione e dell'interrogazione e' nascosta dal sistema."
+%
+% Poi inserisci la figura con il blocco seguente.
+% Se non hai ancora un'immagine, crea uno schema con TikZ o
+% prepara un'immagine e salvala in tesi/img/.
+%
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.85\textwidth]{img/diagramma_funzionale.png}
+%   \caption{Flusso funzionale ad alto livello dell'LLM Query Builder:
+%            l'utente formula una domanda in linguaggio naturale;
+%            il sistema produce ed esegue la query SPARQL corrispondente
+%            e restituisce le risorse trovate nel Datavault.}
+%   \label{fig:diagramma_funzionale}
+% \end{figure}
+%
+% Paragrafo dopo la figura:
+%   Commenta la figura in 3-4 righe. Cosa sottolinea questo schema?
+%   Dove risiede la complessita'? Cosa e' trasparente all'utente?
+%   (Questa e' la prassi accademica: ogni figura va discussa nel testo.)
+%
+
+\subsection{I componenti del sistema e le loro responsabilita'}
+\label{subsec:componenti}
+%
+% Paragrafo 1 - Il DataVault Browser (frontend):
+%   Descrivi il componente frontale: e' l'interfaccia utente con cui
+%   il ricercatore interagisce. Ospita la barra di ricerca LLM e
+%   visualizza i risultati. Parla di COSA fa, non di come e' costruito.
+%
+% Paragrafo 2 - Il backend LLM (il Query Builder):
+%   Descrivi il componente centrale: riceve il testo naturale,
+%   utilizza un modello linguistico contestualizzato sull'ontologia
+%   del Datavault, e produce la query SPARQL. Parla di COSA fa.
+%
+% Paragrafo 3 - Il Datavault / Blazegraph (il triplestore):
+%   Descrivi il componente dati: riceve la query SPARQL generata,
+%   la esegue sul grafo RDF contenente le 19 milioni di triple,
+%   e restituisce i risultati. Parla di COSA fa, non dei dettagli
+%   tecnici del triplestore (quelli vanno nel Cap. 3).
+%
+
+
+% =============================================================================
+\section{Casi d'uso principali}
+\label{sec:casiduso}
+% =============================================================================
+%
+% Obiettivo: rendere il sistema concreto e comprensibile attraverso
+% esempi reali tratti dal tuo lavoro. Scegli 2 o 3 casi d'uso
+% significativi e DIVERSI tra loro (non varianti dello stesso scenario).
+% Per ogni caso usa lo stesso formato strutturato (vedi sotto).
+%
+% SUGGERIMENTO: scegli casi d'uso che coprano aspetti diversi:
+%  - Caso 1: ricerca per caratteristiche tecniche del dispositivo
+%            (es. marca/modello della fotocamera usata per acquisire)
+%  - Caso 2: ricerca per attributi del soggetto/contenuto
+%            (es. tipologia di oggetto culturale o progetto di riferimento)
+%  - Caso 3: ricerca combinata multi-criterio con filtro temporale
+%            (es. risorse di un certo tipo acquisite in un intervallo di date)
+%
+
+\subsection{Caso d'uso 1: ricerca per caratteristiche di acquisizione}
+\label{subsec:cu1}
+%
+% Struttura OBBLIGATORIA per ogni caso d'uso:
+%
+% [ATTORE]
+%   Chi usa il sistema in questo scenario?
+%   Esempio: "Un ricercatore del progetto X che vuole analizzare
+%   la consistenza del parco macchine utilizzato per le acquisizioni."
+%
+% [OBIETTIVO]
+%   Cosa vuole ottenere l'utente? In UNA frase.
+%   Esempio: "Trovare tutte le risorse digitali acquisite con
+%   fotocamere Nikon, indipendentemente dal modello specifico."
+%
+% [INPUT IN LINGUAGGIO NATURALE]
+%   La domanda esatta che l'utente digita nel sistema.
+%   Mettila tra virgolette o in un ambiente \texttt{}:
+%   "Mostrami tutte le immagini acquisite con una fotocamera Nikon."
+%
+% [QUERY SPARQL GENERATA]
+%   La query SPARQL che il sistema produce. Mostrala in un lstlisting.
+%   USA UNA QUERY REALE del tuo sistema (prendila dai tuoi test).
+%   NON inventare la query.
+%
+%   \begin{lstlisting}[language=SPARQL, caption={Query SPARQL generata
+%   per il Caso d'uso 1}, label={lst:cu1_query}]
+%   PREFIX exif: <http://www.w3.org/2003/12/exif/ns#>
+%   SELECT ?risorsa
+%   WHERE {
+%     ?risorsa exif:make ?marca .
+%     FILTER(CONTAINS(LCASE(?marca), "nikon"))
+%   }
+%   \end{lstlisting}
+%
+% [RISULTATO ATTESO]
+%   Cosa vede l'utente dopo aver inviato la query?
+%   Quante risorse vengono restituite tipicamente?
+%   Come vengono presentate nell'interfaccia (albero, lista, ecc.)?
+%
+% [NOTA SULLA RILEVANZA]
+%   1-2 righe su perche' questo caso d'uso e' rappresentativo.
+%   Dimostra un bisogno reale del dominio DH.ARC.
+%
+
+\subsection{Caso d'uso 2: ricerca per progetto e tipologia di risorsa}
+\label{subsec:cu2}
+%
+% Usa la stessa struttura del Caso d'uso 1:
+% [ATTORE], [OBIETTIVO], [INPUT], [QUERY SPARQL], [RISULTATO], [RILEVANZA]
+%
+% Suggerimento per questo caso:
+%   Attore: un responsabile di un progetto di digitalizzazione che
+%   vuole fare un inventario delle risorse prodotte.
+%   Input esempio: "Elenca tutte le risorse del progetto Nextscan
+%   caricate nel sistema."
+%   Questo caso d'uso dimostra la capacita' del sistema di filtrare
+%   per metadati descrittivi (Dublin Core) anziche' tecnici (EXIF).
+%   E' un caso d'uso piu' semplice ma molto comune nel dominio DH.ARC.
+%
+
+\subsection{Caso d'uso 3: ricerca multi-criterio con filtro temporale}
+\label{subsec:cu3}
+%
+% Usa la stessa struttura dei casi precedenti:
+% [ATTORE], [OBIETTIVO], [INPUT], [QUERY SPARQL], [RISULTATO], [RILEVANZA]
+%
+% Suggerimento per questo caso:
+%   Attore: un ricercatore che vuole analizzare la produzione
+%   digitale in un periodo specifico.
+%   Input esempio: "Mostrami tutte le risorse acquisite tra il 2022
+%   e il 2023 con una risoluzione superiore a 4000 pixel."
+%   Questo e' il caso d'uso piu' complesso: dimostra la capacita' del
+%   sistema di gestire query multi-criterio (filtri combinati su
+%   data E caratteristica tecnica), che sarebbero molto difficili
+%   da scrivere manualmente in SPARQL per un non esperto.
+%   E' il caso d'uso piu' forte per la tua tesi: usalo per dimostrare
+%   il valore aggiunto del sistema rispetto ai filtri tradizionali.
+%
+
+
+% =============================================================================
+\section{Conclusioni del capitolo}
+\label{sec:conclusioni_cap2}
+% =============================================================================
+%
+% [REGOLA DI VITALI - "Di' cosa hai detto"]
+%
+% Paragrafo 1 - Il riepilogo (obbligatorio):
+%   Riprendi il CLAIM enunciato nella \cref{sec:intro_cap2} e
+%   dimostra che il capitolo lo ha sostenuto punto per punto.
+%   Schema: "In questo capitolo abbiamo visto che [X], [Y] e [Z].
+%   Questi elementi mostrano come l'LLM Query Builder risponda a
+%   un bisogno reale degli utenti del DH.ARC, abbassando la soglia
+%   di accesso al Datavault senza richiedere competenze tecniche."
+%   NON introdurre concetti nuovi qui: solo sintesi di quanto gia' detto.
+%
+% Paragrafo 2 - Il ponte verso il Capitolo 3 (obbligatorio):
+%   Il capitolo successivo si occupa del COME il sistema e' stato
+%   realizzato. Scrivi una transizione esplicita che guidi il lettore.
+%   Esempio: "Avendo chiarito cosa il sistema fa e a quali bisogni
+%   risponde, il \cref{chap:implementazione} approfondisce le scelte
+%   architetturali e implementative che ne rendono possibile il
+%   funzionamento: la struttura del backend LLM, il processo di
+%   fine-tuning del modello, e la progettazione dell'ontologia
+%   di contesto che guida la generazione delle query."
+%
+%   Usa \cref{chap:implementazione} per il riferimento incrociato.
+%   Vitali valuta positivamente la coerenza strutturale tra i capitoli:
+%   il lettore non deve mai sentirsi "abbandonato" alla fine di una sezione.
+%
