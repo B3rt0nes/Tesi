@@ -1,4 +1,4 @@
-% =============================================================================
+
 % capitolo2_prototipo.tex
 % Capitolo 2: Il Prototipo - Astrazione e Funzionalita'
 %
@@ -8,13 +8,13 @@
 %  Il Cap. 3 (implementazione) si occupera' del COME.
 %
 %  LUNGHEZZA SUGGERITA: 10-20 pagine.
-% =============================================================================
 
 
-% =============================================================================
+
+
 \section{Introduzione al capitolo}
 \label{sec:intro_cap2}
-% =============================================================================
+
 %
 % [REGOLA DI VITALI - "Di' cosa stai per dire"]
 %
@@ -52,10 +52,10 @@
 %
 
 
-% =============================================================================
+
 \section{Il dominio e gli utenti target}
 \label{sec:dominio}
-% =============================================================================
+
 %
 % Obiettivo: dimostrare che esiste un reale bisogno non soddisfatto.
 % Chi sono questi utenti? Cosa vogliono fare? Perche' non riescono?
@@ -122,10 +122,10 @@
 %
 
 
-% =============================================================================
+
 \section{Information Architecture e Trovabilita'}
 \label{sec:ia}
-% =============================================================================
+
 %
 % Obiettivo: ancorare il tuo lavoro a una teoria riconosciuta
 % (Morville e Rosenfeld) e dimostrare che l'LLM Query Builder
@@ -186,10 +186,10 @@
 %
 
 
-% =============================================================================
+
 \section{Architettura Funzionale (Ad alto livello)}
 \label{sec:architettura}
-% =============================================================================
+
 %
 % ATTENZIONE: NESSUN DETTAGLIO IMPLEMENTATIVO IN QUESTA SEZIONE.
 % Nessun linguaggio di programmazione, nessuna libreria, nessun codice.
@@ -279,10 +279,10 @@
 %
 
 
-% =============================================================================
+
 \section{Casi d'uso principali}
 \label{sec:casiduso}
-% =============================================================================
+
 %
 % Obiettivo: rendere il sistema concreto e comprensibile attraverso
 % esempi reali tratti dal tuo lavoro. Scegli 2 o 3 casi d'uso
@@ -379,10 +379,10 @@
 %
 
 
-% =============================================================================
+
 \section{Conclusioni del capitolo}
 \label{sec:conclusioni_cap2}
-% =============================================================================
+
 %
 % [REGOLA DI VITALI - "Di' cosa hai detto"]
 %
