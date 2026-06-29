@@ -1,44 +1,27 @@
-%! TeX root = ../tesi.tex
 % =============================================================================
-% capitolo0_introduzione.tex
-% Capitolo 0: Introduzione
-%
-% LINEE GUIDA VITALI:
-%  L'introduzione NON e' un riassunto della tesi. E' la tesi in miniatura.
-%  Deve rispondere a queste domande, in quest'ordine:
-%
-%  1. CLAIM: Qual e' l'affermazione centrale che la dissertazione dimostra?
-%     Scrivi la tesi in UNA frase chiara e verificabile.
-%     Esempio: "In questa tesi dimostriamo che X e' superiore a Y per il problema Z."
-%
-%  2. PROBLEMA: Quale problema stai risolvendo? Perche' e' importante?
-%     Descrivi il dominio applicativo e la rilevanza del problema.
-%
-%  3. CONTESTO BREVE: Cosa esiste gia'? Cosa manca?
-%     Panoramica brevissima dello stato dell'arte e del gap che il tuo lavoro colma.
-%
-%  4. SOLUZIONE BREVE: Cosa hai costruito/proposto?
-%     Ad alto livello, senza dettagli tecnici (quelli vanno nei Cap. 2-3).
-%
-%  5. VALUTAZIONE BREVE: Come hai verificato che funziona?
-%     Accenna alla metodologia e ai risultati principali.
-%
-%  LUNGHEZZA SUGGERITA: 3-5 pagine. Di solito senza molte sottosezioni.
+\section{Il contesto e il problema}\label{sec:intro_problema}
 % =============================================================================
+% Qui definisci il "claim" e l'ambito:
+% - L'esigenza di esplorare dati complessi (il Datavault).
+% - Il problema: gli utenti target non conoscono SPARQL e i form tradizionali sono limitanti.
+% - Il claim: un sistema basato su LLM (LLM Query Builder) per tradurre il linguaggio naturale in SPARQL in modo trasparente.
 
-% --- 1. CLAIM ---
-% Scrivi qui la tua tesi in una frase. E' il punto di partenza di tutto.
+% =============================================================================
+\section{Struttura della dissertazione}\label{sec:intro_struttura}
+% =============================================================================
+% Brevissima anticipazione dei capitoli, 1 paragrafo ciascuno.
 
-% --- 2. PROBLEMA ---
-% Descrivi il problema che affronti e perche' e' rilevante nel tuo campo.
+\subsection*{Capitolo 2: Contesto scientifico e tecnologico}
+% Anticipa che esplorerai il limite di SPARQL, la teoria dell'Information Architecture (berrypicking) e RAG.
 
-% --- 3. CONTESTO BREVE ---
-% Panoramica dello stato dell'arte: cosa c'e' gia', cosa manca.
+\subsection*{Capitolo 3: Il prototipo}
+% Anticipa che presenterai l'utente finale, il dominio e i tre casi d'uso principali.
 
-% --- 4. SOLUZIONE BREVE ---
-% Cosa hai costruito/proposto, senza dettagli tecnici.
+\subsection*{Capitolo 4: Architettura e implementazione}
+% Anticipa lo stack (Fedora/Blazegraph), il fine-tuning con Unsloth e il backend FastAPI.
 
-% --- 5. VALUTAZIONE BREVE ---
-% Come hai verificato che funziona? Risultati principali.
+\subsection*{Capitolo 5: Valutazione}
+% Anticipa i test di efficienza (Kaggle vs locale) e di efficacia (precision/recall, allucinazioni).
 
-Scrivi qui il contenuto dell'introduzione.
+\subsection*{Capitolo 6: Conclusioni e sviluppi futuri}
+% Anticipa che farai un bilancio dei risultati raggiunti e delle estensioni possibili per altri domini umanistici.

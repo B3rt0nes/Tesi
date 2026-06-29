@@ -72,21 +72,15 @@
 }
 
 % --- Utility varie ---
-\usepackage[most]{tcolorbox}
+\usepackage[most]{tcolorbox} 
 \usepackage{xcolor}
 \definecolor{mygray}{RGB}{200,200,200}
 \usepackage{newlfont}
 \usepackage{soul}
 \usepackage{enumitem}
-\usepackage{xcolor}
+
 \definecolor{light-gray}{gray}{0.95}
-\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
 
-\newcommand{\var}{\texttt}
-
-\newcommand{\myfootnotemark}{\stepcounter{footnote}\footnotemark[\thefootnote]\setcounter{mycount}{\value{footnote}}}
-\newcommand{\firstfootnotetext}[1]{\footnotetext[\themycount]{#1}}
-\newcommand{\otherfootnotetext}[1]{\stepcounter{mycount}\footnotetext[\themycount]{#1}}
 
 \newtcolorbox{mybox}[1][]{%
     blanker, 
@@ -108,12 +102,21 @@
             pdfauthor={Alberto Zuccari},
             pdfsubject={Tesi di Laurea},
             pdfkeywords={parola1, parola2, parola3}]{hyperref}
-\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{cleveref}
+
+\crefname{section}{paragrafo}{paragrafi}
 
 % =============================================================================
 % COMANDI CUSTOM
 % =============================================================================
 \newcommand{\rom}[1]{\MakeUppercase{\romannumeral#1\relax}}
+\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
+
+\newcommand{\var}{\texttt}
+
+\newcommand{\myfootnotemark}{\stepcounter{footnote}\footnotemark[\thefootnote]\setcounter{mycount}{\value{footnote}}}
+\newcommand{\firstfootnotetext}[1]{\footnotetext[\themycount]{#1}}
+\newcommand{\otherfootnotetext}[1]{\stepcounter{mycount}\footnotetext[\themycount]{#1}}
 
 % =============================================================================
 % BIBLIOGRAFIA - Stile ALPHA (linee guida Vitali)

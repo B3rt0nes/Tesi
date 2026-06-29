@@ -1,328 +1,133 @@
-\section{Introduzione al capitolo}\label{sec:intro_cap2}
-Presentiamo l'idea di un LLM Query Builder come strumento che possa assistere i ricercatori del FICLIT (Dipartimento di Filologia Classica e Italianistica) nella ricerca all'interno del Datavault, un repository curato dal DH.ARC (Digital Humanities Advanced Research Centre) dell'Università di Bologna. Lo scopo di questo capitolo è quello di presentare il prototipo di tale strumento e di discutere le sue potenzialità e i suoi limiti. 
 
-Questa implementazione assiste un utente ipotetico, un ricercatore del FICLIT, come un umanista qualsiasi, che non si sia mai interfacciato con l'applicativo, il team di ricerca o, banalmente, un triplestore RDF e l'interrogazione via SPARQL.\cref{chap:contesto}
-Questo tipo di figure professionali non sono sempre avvezze all'utilizzo di strumenti come i database relazionali o graph, anzi. Spesso non hanno nemmeno idea di cosa siano o come funzionino. Per tale motivo, è necessario fornire loro uno strumento che sia in grado di tradurre le loro esigenze in un linguaggio che possa essere compreso dal database. 
+\section{Introduzione al capitolo}\label{sec:intro_cap3}
 
-Andremo ora a descrivere il dominio degli utenti con i relativi bisogni informativi [\cref{sec:dominio}], passando poi ad analizzare come l'Intelligenza Artificiale (IA) modifichi il paradigma di esplorazione del dato [\cref{sec:ia}], per poi presentare l'architettura del sistema proposta in questo elaborato [\cref{sec:architettura}], andando poi ad illustrare tre scenari d'uso concreti [\cref{sec:casiduso}], e concludendo il capitolo con un riassunto dei punti chiave presentati [\cref{sec:conclusioni_cap2}].
+
+Avendo chiarito il fondamento scientifico e tecnologico nel \cref{chap:contesto}, presentiamo ora il prototipo di LLM Query Builder realizzato come soluzione concreta ai problemi identificati.
+
+Questo capitolo è organizzato secondo una prospettiva \textit{user-centered}: partiamo dal dominio di applicazione (DH.ARC e il Datavault) e dal profilo degli utenti target (\cref{sec:dominio}), passiamo all'architettura funzionale del sistema come appare all'utente (\cref{sec:architettura}), e concludiamo con tre scenari d'uso concreti (\cref{sec:casiduso}) che dimostrano il valore aggiunto della nostra proposta.
+
 
 \section{Il dominio e gli utenti target}\label{sec:dominio}
-In questa sezione viene definito il contesto d'uso all'interno delle Digital Humanities (DH) e del Patrimonio Culturale (PC), evidenziando il divario tra i complessi bisogni esplorativi dei ricercatori e la rigidità strutturale dei sistemi di Information Retrieval (IR) basati su linguaggi formali. 
 
-L'accesso a basi di dati eterogenee tramite strumenti come SPARQL rappresenta una barriera significativa per chi non possiede competenze tecniche avanzate. Come evidenziato in letteratura, lavorare con questi strumenti impone vincoli rigorosi\cite{Vas25} e richiede una profonda familiarità con le convenzioni dei metadati\cite{Vas24}. Tali approcci si basano su query create manualmente che risultano fragili e difficili da adattare a esigenze mutevoli\cite{Mar25}. Questo pone il ricercatore di fronte all'ostacolo cognitivo della ``scatola vuota'', un limite particolarmente penalizzante per chi ha obiettivi di ricerca non ancora perfettamente focalizzati.
-
-Alla base dei tradizionali sistemi di IR vi è l'assunto che l'utente inizi l'interazione possedendo un bisogno informativo perfettamente strutturato. Nel dominio umanistico, al contrario, l'utente procede per esplorazione. Questo comportamento è ben descritto dal modello della ``raccolta delle bacche'' (berrypicking) teorizzato da Marcia Bates\cite{Bat89}: una strategia di ricerca non lineare in cui gli studiosi si muovono iterativamente, aggiustando la rotta man mano che acquisiscono nuove informazioni. In un simile scenario di \textit{ricerca esplorativa}, assume un valore inestimabile il fenomeno della \textit{serendipity}, ovvero la scoperta inattesa di pattern rilevanti durante la navigazione dei dati.
-
-Considerando il netto contrasto tra la rigidità sintattica di SPARQL e la natura fluida ed evolutiva della ricerca umanistica, emerge la necessità di un nuovo paradigma di interazione. L'introduzione di un'architettura basata su un LLM Query Builder si pone come la soluzione tecnologica ideale per colmare questo divario. Sfruttando il linguaggio naturale, il sistema abbatte le barriere d'ingresso e agisce come un intermediario semantico in grado di assecondare l'assenza iniziale di query perfette, accompagnando l'utente in un'esplorazione iterativa del patrimonio culturale.
 
 \subsection{Il contesto operativo: DH.ARC e il Datavault}\label{subsec:dharc}
-Il Digital Humanities Advanced Research Centre (DH.ARC) è un polo di ricerca dell'Università di Bologna afferente al Dipartimento di Filologia Classica e Italianistica (FICLIT), nato con l'obiettivo di ``connettere studenti, ricercatori, personale IT e professori del FICLIT e del Dipartimento di Informatica {-} Scienza e Ingegneria (DISI)''\cite{Ams26}.
-Il centro ha lo scopo di fungere da hub per gli studiosi e le istituzioni, supportandoli ``nella progettazione, sviluppo e manutenzione di progetti di ricerca DH'' e promuovendo iniziative innovative nel campo umanistico. 
+
+Il Digital Humanities Advanced Research Centre (DH.ARC) è un polo di ricerca dell'Università di Bologna afferente al Dipartimento di Filologia Classica e Italianistica (FICLIT), nato con l'obiettivo di ``connettere studenti, ricercatori, personale IT e professori del FICLIT e del Dipartimento di Informatica --- Scienza e Ingegneria (DISI)''\cite{Ams26}.
+
+Il centro ha lo scopo di fungere da hub per gli studiosi e le istituzioni, supportandoli ``nella progettazione, sviluppo e manutenzione di progetti di ricerca DH'' e promuovendo iniziative innovative nel campo umanistico.
+
 Le attività di ricerca vertono prevalentemente sulla digitalizzazione e creazione di metadati per il patrimonio culturale, che includono in gran parte ``documenti archivistici e libri antichi'', ``testi letterari'' e ``knowledge graphs che descrivono oggetti del patrimonio culturale'' come fotografie e opere d'arte.
-In questo ecosistema si inserisce il Datavault, un database RDF (basato su Blazegraph) che funge da enorme bacino di immagazzinamento delle informazioni. 
-Il Datavault ``contiene, ad ora, 19 milioni di triple tutte molto simili'', dotate di uno specifico ``schema RDF reale''. 
-Proprio a causa di questa vastità e similarità strutturale, ``andare a cercare il file specifico non è cosa semplice ed immediata'': attualmente manca infatti un modo per ``interrogare i dati per contenuto o concetto, nonostante Blazegraph renda l'informazione potenzialmente ricercabile in modo flessibile'' ``.
+
+In questo ecosistema si inserisce il \textit{Datavault}, un database RDF (basato su Blazegraph) che funge da enorme bacino di immagazzinamento delle informazioni. Il Datavault ``contiene, ad ora, 19 milioni di triple tutte molto simili'', dotate di uno specifico ``schema RDF reale''. Proprio a causa di questa vastità e similarità strutturale, ``andare a cercare il file specifico non è cosa semplice ed immediata'': attualmente manca infatti un modo per ``interrogare i dati per contenuto o concetto, nonostante Blazegraph renda l'informazione potenzialmente ricercabile in modo flessibile''.
 
 \subsection{Profilo dell'utente finale: i ricercatori del centro}\label{subsec:utenti}
-\subsubsection{Profilo disciplinare e competenze tecniche dei ricercatori}
-L'utenza di riferimento del centro DH.arc è composta da docenti, ricercatori, assegnisti e studenti di discipline prettamente umanistiche, quali filologia, storia, storia dell'arte e archeologia.\cite{Per22}
-Questi studiosi sono molto competenti nel dominio delle fonti culturali e nell'analisi dei testi critici, ma tipicamente sono privi di un background informatico formale. 
-La loro alfabetizzazione digitale nel campo dell'Information Retrieval si limita solitamente all'impiego di strumenti ``pronti all'uso'': cataloghi OPAC, database relazionali con maschere pre-configurate o motori di ricerca generici.
+
+\subsubsection{Profilo disciplinare e competenze tecniche}
+
+L'utenza di riferimento del centro DH.ARC è composta da docenti, ricercatori, assegnisti e studenti di discipline prettamente umanistiche, quali filologia, storia, storia dell'arte e archeologia\cite{Per22}. Questi studiosi sono molto competenti nel dominio delle fonti culturali e nell'analisi dei testi critici, ma tipicamente sono privi di un background informatico formale. 
+
+La loro alfabetizzazione digitale nel campo dell'Information Retrieval si limita solitamente all'impiego di strumenti ``pronti all'uso'': cataloghi OPAC, database relazionali con maschere pre-configurate o motori di ricerca generici. Non hanno familiarità con triplestore RDF, SPARQL, o Knowledge Graphs.
+
 \subsubsection{Caratterizzazione dei bisogni informativi}
+
 In questo ecosistema, gli utenti non ricercano identificativi esatti o risposte chiuse; piuttosto, adottano comportamenti di ricerca esplorativa, procedendo per esplorazione libera al fine di collegare concetti e scoprire associazioni non immediate tra i documenti.
-Interrogando il Datavault, gli umanisti del centro necessitano di porre interrogazioni cross-dominio articolate, formulando mentalmente domande come: ``Quali immagini di codici medievali del XIV secolo sono state digitalizzate con risoluzione superiore a 300 dpi nel corso del progetto X\@? ''  oppure ``Mostrami tutti i manoscritti attribuiti a un determinato autore e digitalizzati nell'ultimo anno''.
-\subsubsection{La triplice barriera di SPARQL come ostacolo insormontabile}
-Costringere questa tipologia di utenti a esprimere bisogni complessi tramite endpoint SPARQL genera un grande ostacolo, sintetizzabile attraverso tre livelli di difficoltà:
-\begin{enumerate}
-    \item Barriera cognitiva: 
-    L'interazione esige la scrittura in un linguaggio dichiarativo formale e l'obbligo di conoscere complessi prefissi ontologici (es.\ \code{dc:}, \code{exif:}, \code{ebucore:}) per poter anche solo abbozzare una query di base.
-    \item Barriera strutturale: 
-    L'assenza di uno schema grafico fisso o di una mappa visiva delle relazioni all'interno del grafo RDF fa sì che l'utente non sappia quali proprietà esistano realmente nel database né come i dati siano formalizzati nell'ontologia.
-    \item Barriera pratica: 
-    La forte rigidità sintattica determina che un singolo errore di battitura o la mancanza di una corrispondenza esatta produca un set di risultati vuoto. L'assenza di messaggi di errore parlanti impedisce qualsiasi tentativo di debugging autonomo.
-\end{enumerate}
-Studi sull'usabilità delle interfacce per Knowledge Graph confermano che linguaggi come SPARQL impongono vincoli rigidi e richiedono un'esplicita conoscenza degli schemi, competenze estranee ai professionisti del patrimonio culturale.\cite{Vas25}
-Emerge dunque la necessità ineludibile di un LLM Query Builder che, traducendo il linguaggio naturale, svincoli il ricercatore dalle rigidità sintattiche e renda possibile una reale esplorazione dei dati.
+
+Interrogando il Datavault, gli umanisti del centro necessitano di porre interrogazioni cross-dominio articolate, formulando mentalmente domande come: 
+\begin{quote}
+``Quali immagini di codici medievali del XIV secolo sono state digitalizzate con risoluzione superiore a 300 dpi nel corso del progetto X?\@''
+\end{quote}
+o ancora:
+\begin{quote}
+``Mostrami tutti i manoscritti attribuiti a un determinato autore e digitalizzati nell'ultimo anno''.
+\end{quote}
 
 
-% =============================================================================
-\section{Architettura dell'informazione e trovabilità}\label{sec:ia}
-% =============================================================================
-La progettazione di un sistema di accesso per un database RDF contenente milioni di triple non può limitarsi alla pura efficienza computazionale del recupero dati, ma deve rispondere ai principi fondamentali dell'architettura dell'informazione per garantire la reale ``trovabilità'' delle risorse.
-In un contesto umanistico, costringere l'utente a interfacciarsi con la complessità dello schema sottostante attraverso interfacce a filtri rigidi o linguaggi formali genera un grande ostacolo cognitivo.
-L'adozione di un LLM Query Builder, in quest'ottica, non rappresenta un vezzo tecnologico, ma una precisa scelta di design intenta a ristabilire un'interazione naturale tra l'utente e i dati, come dimostrato dai seguenti principi fondativi della disciplina.
-
-\subsubsection{L'illusione della ricerca algoritmica.}
-I tradizionali sistemi di reperimento dei dati basati su query formali (come SQL o SPARQL) assumono erroneamente che l'utente sappia sempre cosa cercare e come tradurre il proprio bisogno in un costrutto logico. 
-Peter Morville e Louis Rosenfeld smontano questo assunto, definendolo un grave errore concettuale nel campo dell'architettura dell'informazione:
-    \begin{quotation}
-    ``Consideriamo questo modello pericoloso perché basato su un equivoco: che trovare informazioni sia un problema diretto, che può essere risolto da un semplice approccio algoritmico.
-    Dopo tutto, abbiamo risolto la sfida del recupero dati --- che, ovviamente sono fatti e cifre --- con tecnologie database come SQL\@. 
-    Così procede la teoria, si trattano idee e concetti incorporati nei documenti testuali semistrutturati nello stesso modo. ''\flushright\cite{Mor08}
-    \end{quotation}
-
-I sistemi algoritmici tradizionali falliscono nel dominio umanistico perché sono progettati per recuperare dati esatti, mentre gli studiosi ricercano concetti, idee e relazioni. Tali concetti sono per loro natura ambigui e sfumati.
-L'LLM Query Builder colma esattamente questo divario: funge da traduttore semantico che accetta l'ambiguità e la ricchezza del linguaggio naturale del ricercatore e lo converte in modo trasparente nell'approccio algoritmico richiesto dalla macchina per interrogare il Datavault.
-
-\subsubsection{Il bilanciamento iterativo tra Recall e Precision.}
-    Un altro problema critico delle interfacce tradizionali a filtri rigidi è l'impossibilità di calibrare dinamicamente e in modo intuitivo il raggio della ricerca. Morville e Rosenfeld spiegano che ogni ricerca è un compromesso matematico tra due metriche inversamente proporzionali:
-    \begin{quotation} 
-        \begin{align}
-        \var{recall} & = \frac{|\var{doc rilevanti recuperati}|}{|\var{doc nella raccolta}|}\\[5pt]
-        \var{precision} & = \frac{|\var{doc rilevanti recuperati}|}{|\var{doc rilevanti della raccolta}|}
-        \end{align}
-    ``[\ldots] Non sarebbe bello poter ottenere contemporaneamente elevati valori di recall e precision? Purtroppo non si può avere botte piena e moglie ubriaca: recall e precision sono inversamente correlati''\hfill\cite{Mor08}.
-    \end{quotation}
-
-    In un'interfaccia a maschera con decine di campi e filtri ontologici, l'utente è costretto a dichiarare a priori il livello di precisione desiderato. Se sbaglia un filtro, ottiene zero risultati (eccesso di Precision); se ne omette uno, viene sommerso da migliaia di risultati irrilevanti (eccesso di Recall). In una conversazione in linguaggio naturale con un LLM, invece, l'aggiustamento del raggio di ricerca avviene in modo iterativo e fluido. L'utente può iniziare con una richiesta esplorativa e ampia (es.\ ``Mostrami tutti i manoscritti del XIV secolo'', privilegiando il Recall) e, osservando i primi risultati, raffinare il tiro conversando (``Filtra solo quelli con miniature e digitalizzati ad alta risoluzione'', aumentando la Precision). L'LLM permette di variare queste metriche dinamicamente senza costringere l'utente a decostruire e riscrivere manualmente una complessa sintassi di query.
-
-\subsubsection{La legge del minimo sforzo, l'overload e la Legge di Hick.}
-    Dal punto di vista del carico cognitivo, esporre all'utente l'immensa topologia di un Knowledge Graph da 19 milioni di triple attraverso decine di menu a tendina o l'obbligo di conoscere specifiche ontologie porta inevitabilmente all'abbandono del sistema. Luca Rosati analizza questo fenomeno attraverso due principi cognitivi fondamentali. Il primo è la legge del minimo sforzo:
-    \begin{quotation}
-    ``La legge del minimo sforzo (least effort) regola quindi il nostro sistema di information seeking, al punto che spesso accettiamo anche contenuti di bassa qualità o affidabilità (se più facili da ottenere e usare) pur di non ricorrere a strategie di ricerca attive, le quali comportano necessariamente sforzi, tempi e competenze maggiori''\hfill\cite{Ros07}.
-    \end{quotation}
-
-    Se l'interfaccia richiede la fatica di apprendere prefissi RDF o di comprendere uno schema dati complesso, l'umanista rinuncerà alla ricerca. Si aggiunge poi l'ansia generata dal paradosso della scelta, matematicamente descritto dalla Legge di Hick, la quale stabilisce che il tempo per prendere una decisione (e il relativo stress) aumenta logaritmicamente all'aumentare delle opzioni presentate.
-
-    \[\text{tempo} = a+b\log_2(n+1)\]
-
-    Rosati sottolinea che se le opzioni ``sono presentate in modo confuso'' o rappresentano ``una lista di opzioni disordinata (priva cioè di un qualche criterio logico riconoscibile da parte dell’utente)'', il carico cognitivo diventa lineare e insostenibile, causando la paralisi decisionale. Presentare un form di interrogazione SPARQL nudo, o una maschera di ricerca avanzata con decine di menù a tendina che mappano un'intera ontologia, equivale esattamente a questo: esporre l'utente a un ``paradosso della scelta'' paralizzante.
-
-    L'interfaccia conversazionale basata su LLM nasconde questa complessità strutturale nel backend. L'utente si trova di fronte a un singolo ``spazio'' (un box di chat), azzerando l'effetto della Legge di Hick e assecondando la Legge del minimo sforzo. Non dovendo più scegliere tra decine di opzioni incomprensibili, il ricercatore delega il carico cognitivo della traduzione ontologica all'LLM, potendo così dedicare le proprie energie intellettuali esclusivamente all'analisi e alla scoperta delle risorse del patrimonio culturale.
-
-\subsection{Il paradigma classico: navigazione e filtri}\label{subsec:paradigma_classico}%
-L'architettura dell'informazione si definisce come il design strutturale di ambienti informativi finalizzato a plasmare l'usabilità e la trovabilità.\cite{Mor08}
-Poggia su quattro sistemi interconnessi:
-\begin{enumerate}[label={\roman*)}]
-    \item sistemi di organizzazione, che categorizzano le informazioni;
-    \item sistemi di etichettatura, che ne determinano la rappresentazione linguistica;
-    \item sistemi di navigazione, che consentono l'orientamento nello spazio;
-    \item sistemi di ricerca, che permettono interrogazioni dirette
-\end{enumerate} 
-
-Applicato al Datavault, l'interrogazione tradizionale mediante filtri rigidi o SPARQL presenta limiti strutturali. Fallisce per tre ragioni:
-\begin{enumerate}
-    \item Pretende conoscenza a priori di stringhe esatte, incompatibile con la ricerca umanistica;\cite{Vas24}
-    \item Non gestisce sinonimia, sfumature e vaghezza del linguaggio naturale;
-    \item Obbliga la formulazione di query multi-criterio in sintassi rigide.
-\end{enumerate}
-Queste rigidità abbattono la ``trovabilità'': l'informazione esiste fisicamente ma rimane irraggiungibile per l'utente.
-
-\subsection{Il nuovo paradigma: ricerca semantica con LLM}\label{subsec:paradigma_semantico}
-%
-
-
-% =============================================================================
 \section{Architettura Funzionale (Ad alto livello)}\label{sec:architettura}
-% =============================================================================
-%
-% ATTENZIONE: NESSUN DETTAGLIO IMPLEMENTATIVO IN QUESTA SEZIONE.
-% Nessun linguaggio di programmazione, nessuna libreria, nessun codice.
-% Quelle informazioni vanno nel Cap. 3 (\cref{chap:implementazione}).
-% Qui si spiega COSA fa il sistema e COME APPARE all'utente.
-%
+
 
 \subsection{Il flusso dell'interazione}\label{subsec:flusso}
-%
-% Paragrafo 1 - Input: il linguaggio naturale:
-%   Descrivi il punto di ingresso del sistema dal punto di vista
-%   dell'utente. L'utente apre l'interfaccia (il DataVault Browser),
-%   trova una barra di ricerca testuale (l'LLM Search Bar) e digita
-%   la sua domanda in italiano (o inglese) in forma libera.
-%   Non ci sono campi da compilare, sintassi da rispettare,
-%   o vocabolari controllati da imparare.
-%   Esempio di input: ``Mostrami tutte le immagini scansionate
-%   con una fotocamera Nikon nel 2022.''
-%
-% Paragrafo 2 - Elaborazione: la traduzione automatica:
-%   Spiega ad alto livello (SENZA dettagli tecnici) che il testo
-%   naturale viene inviato a un componente intelligente (il modello
-%   LLM) che, guidato da una conoscenza dell'ontologia del Datavault,
-%   produce la query SPARQL corrispondente.
-%   Puoi descrivere questo come una ``scatola nera'' funzionale:
-%   Input testuale -> [LLM Query Builder] -> Query SPARQL -> Risultati.
-%   I dettagli del ``come'' sono nel Capitolo 3.
-%
-% Paragrafo 3 - Output: i risultati nel browser:
-%   Descrivi il risultato che l'utente vede: la query SPARQL generata
-%   viene eseguita sul Datavault (Blazegraph) e i risultati vengono
-%   restituiti e visualizzati nell'interfaccia del DataVault Browser
-%   come un albero di risorse navigabile.
-%   L'utente non vede mai la query SPARQL (a meno che non la voglia):
-%   vede solo i risultati pertinenti alla sua domanda.
-%
+
+Dal punto di vista dell'utente, il sistema funziona secondo un flusso semplice:
+
+\begin{enumerate}
+    \item \textbf{Input}: l'utente apre l'interfaccia del Datavault Browser, trova una barra di ricerca testuale (LLM Search Bar), e digita la sua domanda in italiano in forma libera. Non ci sono campi da compilare, sintassi da rispettare, o vocabolari controllati da imparare.
+    
+    Esempio: ``Mostrami tutte le immagini scansionate con una fotocamera Nikon nel 2022''.
+    
+    \item \textbf{Elaborazione}: il testo naturale viene inviato a un componente intelligente (il modello LLM fine-tuned) che, guidato dalla conoscenza dell'ontologia del Datavault, produce una query SPARQL corrispondente.
+    
+    \item \textbf{Output}: la query SPARQL viene eseguita sul Datavault (Blazegraph) e i risultati vengono restituiti e visualizzati nell'interfaccia come un albero di risorse navigabile. L'utente non vede mai la query SPARQL a meno che non la voglia; vede solo i risultati pertinenti alla sua domanda.
+\end{enumerate}
 
 \subsection{Diagramma funzionale del sistema}\label{subsec:diagramma}
-%
-% Paragrafo introduttivo alla figura:
-%   Prima di inserire la figura, scrivi 2-3 righe che la introducano.
-%   Esempio: ``La \cref{fig:diagramma_funzionale} sintetizza il flusso
-%   funzionale descritto: l'utente interagisce esclusivamente con
-%   l'interfaccia in linguaggio naturale, mentre la complessita'
-%   della traduzione e dell'interrogazione e' nascosta dal sistema.''
-%
-% Poi inserisci la figura con il blocco seguente.
-% Se non hai ancora un'immagine, crea uno schema con TikZ o
-% prepara un'immagine e salvala in tesi/img/.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=0.85\textwidth]{img/diagramma_funzionale.png}
-%   \caption{Flusso funzionale ad alto livello dell'LLM Query Builder:
-%            l'utente formula una domanda in linguaggio naturale;
-%            il sistema produce ed esegue la query SPARQL corrispondente
-%            e restituisce le risorse trovate nel Datavault.}
-%   \label{fig:diagramma_funzionale}
-% \end{figure}
-%
-% Paragrafo dopo la figura:
-%   Commenta la figura in 3-4 righe. Cosa sottolinea questo schema?
-%   Dove risiede la complessita'? Cosa e' trasparente all'utente?
-%   (Questa e' la prassi accademica: ogni figura va discussa nel testo.)
-%
 
-\subsection{I componenti del sistema e le loro responsabilita'}\label{subsec:componenti}
+% TODO: Inserire un diagramma TikZ o un'immagine che illustri il flusso
+% [Input testuale] -> [LLM Query Builder] -> [SPARQL Query] -> [Blazegraph] -> [Risultati]
 %
-% Paragrafo 1 - Il DataVault Browser (frontend):
-%   Descrivi il componente frontale: e' l'interfaccia utente con cui
-%   il ricercatore interagisce. Ospita la barra di ricerca LLM e
-%   visualizza i risultati. Parla di COSA fa, non di come e' costruito.
-%
-% Paragrafo 2 - Il backend LLM (il Query Builder):
-%   Descrivi il componente centrale: riceve il testo naturale,
-%   utilizza un modello linguistico contestualizzato sull'ontologia
-%   del Datavault, e produce la query SPARQL. Parla di COSA fa.
-%
-% Paragrafo 3 - Il Datavault / Blazegraph (il triplestore):
-%   Descrivi il componente dati: riceve la query SPARQL generata,
-%   la esegue sul grafo RDF contenente le 19 milioni di triple,
-%   e restituisce i risultati. Parla di COSA fa, non dei dettagli
-%   tecnici del triplestore (quelli vanno nel Cap. 3).
-%
+% Per ora lasciare uno spazio riservato con \cref{fig:diagramma_funzionale}
+
+\subsection{I componenti del sistema e le loro responsabilità}\label{subsec:componenti}
+
+Il sistema si articola in tre componenti principali:
+
+\begin{enumerate}
+    \item \textbf{Frontend (Datavault Browser)}: interfaccia utente dove l'utente digita le domande e visualizza i risultati. Responsabile di: raccogliere input testuale, inviarlo al backend, visualizzare i risultati in formato navigabile.
+    
+    \item \textbf{Backend (LLM Query Builder + RAG Engine)}: il ``cervello'' del sistema. Responsabile di: ricevere la domanda naturale, recuperare lo schema RDF e predicati rilevanti dal Datavault, generare una query SPARQL utilizzando il modello LLM fine-tuned, gestire errori e allucinazioni.
+    
+    \item \textbf{Data Layer (Blazegraph + Schema RDF)}: il triplestore vero e proprio. Responsabile di: immagazzinare e gestire i 19 milioni di triple RDF, eseguire la query SPARQL generata dal backend, restituire i risultati al componente precedente.
+\end{enumerate}
 
 
-% =============================================================================
 \section{Casi d'uso principali}\label{sec:casiduso}
-% =============================================================================
-%
-% Obiettivo: rendere il sistema concreto e comprensibile attraverso
-% esempi reali tratti dal tuo lavoro. Scegli 2 o 3 casi d'uso
-% significativi e DIVERSI tra loro (non varianti dello stesso scenario).
-% Per ogni caso usa lo stesso formato strutturato (vedi sotto).
-%
-% SUGGERIMENTO: scegli casi d'uso che coprano aspetti diversi:
-%  - Caso 1: ricerca per caratteristiche tecniche del dispositivo
-%            (es. marca/modello della fotocamera usata per acquisire)
-%  - Caso 2: ricerca per attributi del soggetto/contenuto
-%            (es. tipologia di oggetto culturale o progetto di riferimento)
-%  - Caso 3: ricerca combinata multi-criterio con filtro temporale
-%            (es. risorse di un certo tipo acquisite in un intervallo di date)
-%
+
+
+Descriviamo tre scenari d'uso concreti che rappresentano i bisogni tipici della ricerca presso DH.ARC:\@
 
 \subsection{Caso d'uso 1: ricerca per caratteristiche di acquisizione}\label{subsec:cu1}
-%
-% Struttura OBBLIGATORIA per ogni caso d'uso:
-%
-% [ATTORE]
-%   Chi usa il sistema in questo scenario?
-%   Esempio: ``Un ricercatore del progetto X che vuole analizzare
-%   la consistenza del parco macchine utilizzato per le acquisizioni.''
-%
-% [OBIETTIVO]
-%   Cosa vuole ottenere l'utente? In UNA frase.
-%   Esempio: ``Trovare tutte le risorse digitali acquisite con
-%   fotocamere Nikon, indipendentemente dal modello specifico.''
-%
-% [INPUT IN LINGUAGGIO NATURALE]
-%   La domanda esatta che l'utente digita nel sistema.
-%   Mettila tra virgolette o in un ambiente \texttt{}:
-%   ``Mostrami tutte le immagini acquisite con una fotocamera Nikon.''
-%
-% [QUERY SPARQL GENERATA]
-%   La query SPARQL che il sistema produce. Mostrala in un lstlisting.
-%   USA UNA QUERY REALE del tuo sistema (prendila dai tuoi test).
-%   NON inventare la query.
-%
-%   \begin{lstlisting}[language=SPARQL, caption={Query SPARQL generata
-%   per il Caso d'uso 1}, label={lst:cu1_query}]
-%   PREFIX exif: <http://www.w3.org/2003/12/exif/ns#>
-%   SELECT ?risorsa
-%   WHERE {
-%     ?risorsa exif:make ?marca .
-%     FILTER(CONTAINS(LCASE(?marca), ``nikon''))
-%   }
-%   \end{lstlisting}
-%
-% [RISULTATO ATTESO]
-%   Cosa vede l'utente dopo aver inviato la query?
-%   Quante risorse vengono restituite tipicamente?
-%   Come vengono presentate nell'interfaccia (albero, lista, ecc.)?
-%
-% [NOTA SULLA RILEVANZA]
-%   1-2 righe su perche' questo caso d'uso e' rappresentativo.
-%   Dimostra un bisogno reale del dominio DH.ARC.
-%
+
+\textbf{Attore}: un ricercatore che vuole individuare immagini acquisite con specifiche caratteristiche tecniche.
+
+\textbf{Obiettivo}: trovare tutte le immagini di una collezione digitalizzate con uno specifico dispositivo fotografico e in un dato intervallo temporale.
+
+\textbf{Input}: ``Mostrami tutte le immagini scansionate con una Nikon D850 tra il 2021 e il 2023''.
+
+\textbf{Traducibilità manuale in SPARQL}: sarebbe complesso e richiederebbe conoscenza di \code{exif:make}, \code{exif:dateTime}, e gestione di range temporali.
+
+\textbf{Rilevanza}: Questo caso d'uso dimostra come il sistema gestisce filtri tecnici (dispositivo fotografico) combinati con vincoli temporali, delegando all'LLM la complessità di tradurre una descrizione naturale in una query strutturata.
 
 \subsection{Caso d'uso 2: ricerca per progetto e tipologia di risorsa}\label{subsec:cu2}
-%
-% Usa la stessa struttura del Caso d'uso 1:
-% [ATTORE], [OBIETTIVO], [INPUT], [QUERY SPARQL], [RISULTATO], [RILEVANZA]
-%
-% Suggerimento per questo caso:
-%   Attore: un responsabile di un progetto di digitalizzazione che
-%   vuole fare un inventario delle risorse prodotte.
-%   Input esempio: ``Elenca tutte le risorse del progetto Nextscan
-%   caricate nel sistema.''
-%   Questo caso d'uso dimostra la capacita' del sistema di filtrare
-%   per metadati descrittivi (Dublin Core) anziche' tecnici (EXIF).
-%   E' un caso d'uso piu' semplice ma molto comune nel dominio DH.ARC.
-%
+
+\textbf{Attore}: un responsabile di un progetto di digitalizzazione che vuole fare un inventario delle risorse prodotte.
+
+\textbf{Obiettivo}: elencare tutte le risorse di un progetto specifico con una determinata tipologia.
+
+\textbf{Input}: ``Elenca tutte le risorse del progetto NextScan caricate nel sistema''.
+
+\textbf{Traducibilità manuale in SPARQL}: richiede conoscenza di predicati descrittivi (\code{dc:isPartOf}, \code{dc:title}) e della struttura dei progetti nel Datavault.
+
+\textbf{Rilevanza}: Questo caso d'uso dimostra la capacità del sistema di filtrare per metadati descrittivi (Dublin Core) anziché tecnici (EXIF), rispondendo a un bisogno amministrativo frequente nel dominio DH.ARC.\@
 
 \subsection{Caso d'uso 3: ricerca multi-criterio con filtro temporale}\label{subsec:cu3}
-%
-% Usa la stessa struttura dei casi precedenti:
-% [ATTORE], [OBIETTIVO], [INPUT], [QUERY SPARQL], [RISULTATO], [RILEVANZA]
-%
-% Suggerimento per questo caso:
-%   Attore: un ricercatore che vuole analizzare la produzione
-%   digitale in un periodo specifico.
-%   Input esempio: ``Mostrami tutte le risorse acquisite tra il 2022
-%   e il 2023 con una risoluzione superiore a 4000 pixel.''
-%   Questo e' il caso d'uso piu' complesso: dimostra la capacita' del
-%   sistema di gestire query multi-criterio (filtri combinati su
-%   data E caratteristica tecnica), che sarebbero molto difficili
-%   da scrivere manualmente in SPARQL per un non esperto.
-%   E' il caso d'uso piu' forte per la tua tesi: usalo per dimostrare
-%   il valore aggiunto del sistema rispetto ai filtri tradizionali.
-%
+
+\textbf{Attore}: un ricercatore che vuole analizzare la produzione digitale in un periodo specifico.
+
+\textbf{Obiettivo}: trovare tutte le risorse acquisite in un intervallo temporale con ulteriori vincoli di qualità.
+
+\textbf{Input}: ``Mostrami tutte le risorse acquisite tra il 2022 e il 2023 con una risoluzione superiore a 4000 pixel''.
+
+\textbf{Traducibilità manuale in SPARQL}: è il caso più complesso---dimostra la capacità del sistema di gestire query multi-criterio (filtri combinati su data E caratteristica tecnica), estremamente difficili da scrivere manualmente in SPARQL per un non esperto.
+
+\textbf{Rilevanza}: Questo è il caso d'uso più forte per la nostra proposta: evidenzia il valore aggiunto del sistema rispetto ai filtri tradizionali e alla scrittura manuale di SPARQL.\@
 
 
-% =============================================================================
-\section{Conclusioni del capitolo}\label{sec:conclusioni_cap2}
-% =============================================================================
-%
-% [REGOLA DI VITALI - ``Di' cosa hai detto'']
-%
-% Paragrafo 1 - Il riepilogo (obbligatorio):
-%   Riprendi il CLAIM enunciato nella \cref{sec:intro_cap2} e
-%   dimostra che il capitolo lo ha sostenuto punto per punto.
-%   Schema: ``In questo capitolo abbiamo visto che [X], [Y] e [Z].
-%   Questi elementi mostrano come l'LLM Query Builder risponda a
-%   un bisogno reale degli utenti del DH.ARC, abbassando la soglia
-%   di accesso al Datavault senza richiedere competenze tecniche.''
-%   NON introdurre concetti nuovi qui: solo sintesi di quanto gia' detto.
-%
-% Paragrafo 2 - Il ponte verso il Capitolo 3 (obbligatorio):
-%   Il capitolo successivo si occupa del COME il sistema e' stato
-%   realizzato. Scrivi una transizione esplicita che guidi il lettore.
-%   Esempio: ``Avendo chiarito cosa il sistema fa e a quali bisogni
-%   risponde, il \cref{chap:implementazione} approfondisce le scelte
-%   architetturali e implementative che ne rendono possibile il
-%   funzionamento: la struttura del backend LLM, il processo di
-%   fine-tuning del modello, e la progettazione dell'ontologia
-%   di contesto che guida la generazione delle query.''
-%
-%   Usa \cref{chap:implementazione} per il riferimento incrociato.
-%   Vitali valuta positivamente la coerenza strutturale tra i capitoli:
-%   il lettore non deve mai sentirsi ``abbandonato'' alla fine di una sezione.
-%
+\section{Conclusioni del capitolo}\label{sec:conclusioni_cap3}
+In questo capitolo abbiamo presentato il prototipo di LLM Query Builder nel suo contesto operativo e funzionale. Abbiamo visto che:
+
+\begin{enumerate}
+    \item Il dominio di applicazione (DH.ARC) presenta utenti con bisogni esplorativi complessi e assenza di competenze tecniche;
+    \item L'architettura funzionale del sistema è semplice dal punto di vista dell'utente: ``domanda naturale $\to$ risultati'', nascondendo tutta la complessità nel backend;
+    \item I tre casi d'uso concreti dimostrano come il sistema riduce significativamente la barriera di accesso al Datavault.
+\end{enumerate}
+
+Avendo chiarito il \textit{cosa} e il \textit{perché}, il \cref{chap:implementazione} approfondisce le scelte architetturali e implementative che rendono possibile il funzionamento del sistema: la struttura del backend LLM, il processo di fine-tuning del modello, la gestione dell'ontologia RDF, e la progettazione del dataset di training.
