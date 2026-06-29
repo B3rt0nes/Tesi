@@ -72,8 +72,34 @@
 }
 
 % --- Utility varie ---
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\definecolor{mygray}{RGB}{200,200,200}
 \usepackage{newlfont}
 \usepackage{soul}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\definecolor{light-gray}{gray}{0.95}
+\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
+
+\newcommand{\var}{\texttt}
+
+\newcommand{\myfootnotemark}{\stepcounter{footnote}\footnotemark[\thefootnote]\setcounter{mycount}{\value{footnote}}}
+\newcommand{\firstfootnotetext}[1]{\footnotetext[\themycount]{#1}}
+\newcommand{\otherfootnotetext}[1]{\stepcounter{mycount}\footnotetext[\themycount]{#1}}
+
+\newtcolorbox{mybox}[1][]{%
+    blanker, 
+    left skip=1.3em,
+    left=-1.3em,
+    borderline west={1.5pt}{0pt}{gray},
+    breakable,
+    #1}
+
+\AtBeginEnvironment{quotation}{\begin{mybox}}
+\AtEndEnvironment{quotation}{\end{mybox}}
+\AtBeginEnvironment{quote}{\begin{mybox}}
+\AtEndEnvironment{quote}{\end{mybox}}
 
 % --- Riferimenti incrociati e hyperlink ---
 % NOTA: hyperref va caricato per penultimo, cleveref per ultimo.
@@ -111,7 +137,7 @@
 %  File di riferimento: refs.bib (nella stessa cartella di tesi.tex)
 %  Vedi refs.bib per esempi completi di @article, @book, @misc.
 % =============================================================================
-\usepackage{natbib}
+\usepackage[numbers]{natbib}
 \bibliographystyle{alpha}
 
 
@@ -251,9 +277,9 @@ Abstract qui (da completare alla fine).
 % CAPITOLO 0: INTRODUZIONE
 % (Linee guida Vitali: vedi capitoli/capitolo0_introduzione.tex)
 % =============================================================================
-\setcounter{chapter}{-1}  % Rende questo il Capitolo 0
+\setcounter{chapter}{0}  % Rende questo il Capitolo 0
 \chapter{Introduzione}\label{chap:intro}
-\input{capitoli/capitolo0_introduzione}
+\input{capitoli/capitolo1_introduzione}
 
 
 % =============================================================================
@@ -261,15 +287,15 @@ Abstract qui (da completare alla fine).
 % (Linee guida Vitali: vedi capitoli/capitolo1_contesto.tex)
 % =============================================================================
 \chapter{Contesto scientifico e tecnologico}\label{chap:contesto}
-\input{capitoli/capitolo1_contesto}
+\input{capitoli/capitolo2_contesto}
 
 
 % =============================================================================
 % CAPITOLO 2: IL PROTOTIPO - ASTRAZIONE E FUNZIONALITA'
 % (Linee guida Vitali: vedi capitoli/capitolo2_prototipo.tex)
 % =============================================================================
-\chapter{Il prototipo: astrazione e funzionalità}\label{chap:prototipo}
-\input{capitoli/capitolo2_prototipo}
+\chapter{Il prototipo}\label{chap:prototipo}
+\input{capitoli/capitolo3_prototipo}
 
 
 % =============================================================================
@@ -277,7 +303,7 @@ Abstract qui (da completare alla fine).
 % (Linee guida Vitali: vedi capitoli/capitolo3_implementazione.tex)
 % =============================================================================
 \chapter{Architettura e dettagli implementativi}\label{chap:implementazione}
-\input{capitoli/capitolo3_implementazione}
+\input{capitoli/capitolo4_implementazione}
 
 
 % =============================================================================
@@ -285,7 +311,7 @@ Abstract qui (da completare alla fine).
 % (Linee guida Vitali: vedi capitoli/capitolo4_valutazione.tex)
 % =============================================================================
 \chapter{Valutazione}\label{chap:valutazione}
-\input{capitoli/capitolo4_valutazione}
+\input{capitoli/capitolo5_valutazione}
 
 
 % =============================================================================
@@ -293,7 +319,7 @@ Abstract qui (da completare alla fine).
 % (Linee guida Vitali: vedi capitoli/capitolo5_conclusioni.tex)
 % =============================================================================
 \chapter{Conclusioni e sviluppi futuri}\label{chap:conclusioni}
-\input{capitoli/capitolo5_conclusioni}
+\input{capitoli/capitolo6_conclusioni}
 
 
 % =============================================================================

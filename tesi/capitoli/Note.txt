@@ -3,7 +3,7 @@
 % Capitolo 2: Il Prototipo - Astrazione e Funzionalita'
 %
 % LINEE GUIDA VITALI:
-%  Questo capitolo e' dedicato al "COSA" e al "PERCHE'": NON al "COME".
+%  Questo capitolo e' dedicato al "COSA" e al "PERCHÈ": NON al "COME".
 %  Il lettore deve capire il sistema senza conoscere i dettagli tecnici.
 %  Il Cap. 3 (implementazione) si occupera' del COME.
 %
