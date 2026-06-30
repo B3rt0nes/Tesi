@@ -1,55 +1,640 @@
 \section{Introduzione al capitolo}\label{sec:intro_cap4}
-Questo capitolo illustra nel dettaglio l'architettura tecnica e le scelte implementative che costituiscono il motore dell'LLM Query Builder.
-Mentre il capitolo precedente ha descritto il sistema dal punto di vista dell'utente finale, qui verranno analizzati i componenti software, lo stack tecnologico e le metodologie di addestramento utilizzate per trasformare il linguaggio naturale in query SPARQL eseguibili.
 
-La trattazione seguirà il flusso logico della costruzione del sistema: partendo dall'infrastruttura di base (\cref{sec:stack}), passeremo alla complessa pipeline di fine-tuning del modello (\cref{sec:finetuning}), per poi analizzare l'architettura del backend (\cref{sec:backend}) e le specifiche del dataset di addestramento (\cref{sec:dataset}).
+In questo capitolo viene illustrata nel dettaglio l'architettura tecnica e le scelte implementative che costituiscono il motore dell'LLM Query Builder. Se il \cref{chap:prototipo} ha descritto il sistema dal punto di vista dell'utente finale focalizzandosi sulla transizione da domanda naturale a risultati navigabili, in questo capitolo verranno analizzati i componenti software, lo stack tecnologico e le metodologie di addestramento che rendono possibile tale comportamento.
+
+Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'infrastruttura di base e dalle scelte tecnologiche complessive (\cref{sec:stack}), passando alla pipeline di fine-tuning del modello (\cref{sec:finetuning}), quindi si analizza l'architettura del backend e l'integrazione con il frontend (\cref{sec:backend}), per concludere con il formato e la struttura del dataset di addestramento (\cref{sec:dataset}).
 
 \section{Stack tecnologico: Fedora e Blazegraph}\label{sec:stack}
-L'infrastruttura dati su cui si appoggia l'LLM Query Builder è costituita dall'accoppiata Fedora Commons e Blazegraph.
-Blazegraph, in particolare, opera come triplestore ad alte prestazioni per il Datavault, fornendo l'endpoint SPARQL nativo interrogato dal nostro sistema.
-La sfida architettonica principale è consistita nel creare un layer intermedio capace di dialogare fluidamente con la rigidità formale richiesta da Blazegraph, astraendo completamente questa complessità dal frontend esposto al ricercatore.
+  \begin{figure}[htbp]
+    \centering
+    % \resizebox costringe l'intera figura a scalare perfettamente entro la larghezza del testo
+    \resizebox{\textwidth}{!}{
+      \begin{tikzpicture}[
+        % Aumentiamo la distanza orizzontale a 2.6cm per evitare qualsiasi sovrapposizione
+        node distance=1.6cm and 2.6cm, 
+        box/.style={rectangle, draw=black, thick, rounded corners, minimum width=3.2cm, minimum height=1.4cm, align=center, fill=blue!5, font=\small},
+        db/.style={cylinder, draw=black, thick, aspect=0.25, shape border rotate=90, minimum width=3.2cm, minimum height=1.4cm, align=center, fill=green!5, font=\small},
+        arrow/.style={-Latex, thick}
+      ]
 
+      % --- Nodi ---
+      \node[box] (frontend) {\textbf{Browser Frontend} \\ (React)};
+      \node[box, right=of frontend] (backend) {\textbf{FastAPI Backend} \\ (Inference Engine)};
+      \node[box, right=of backend] (llm) {\textbf{LLM Model} \\ (Phi-3-mini)};
+      \node[db, below=of backend] (blazegraph) {\textbf{Blazegraph} \\ (Triplestore)};
+
+      % --- Archi e Connessioni con testi perfettamente distanziati ---
+
+      % Canale Frontend <-> Backend (Orizzontale perfetto grazie a yshift)
+      \draw[arrow] ([yshift=2.5mm]frontend.east) -- node[above, font=\scriptsize, midway, align=center] {HTTP \\ POST} ([yshift=2.5mm]backend.west);
+      \draw[arrow] ([yshift=-2.5mm]backend.west) -- node[below, font=\scriptsize, midway, align=center] {JSON \\ (Risultati)} ([yshift=-2.5mm]frontend.east);
+
+      % Canale Backend <-> LLM (Orizzontale perfetto grazie a yshift)
+      \draw[arrow] ([yshift=2.5mm]backend.east) -- node[above, font=\scriptsize, midway, align=center] {Prompt} ([yshift=2.5mm]llm.west);
+      \draw[arrow] ([yshift=-2.5mm]llm.west) -- node[below, font=\scriptsize, midway, align=center] {Query \\ SPARQL} ([yshift=-2.5mm]backend.east);
+
+      % Canale Backend <-> Blazegraph (Verticale)
+      \draw[arrow] (backend.255) -- node[left, font=\scriptsize, midway] {SPARQL} (blazegraph.105);
+      \draw[arrow] (blazegraph.75) -- node[right, font=\scriptsize, midway] {RDF Bindings} (backend.285);
+
+      \end{tikzpicture}
+    }
+    \caption{Architettura logica e flusso di comunicazione del sistema. 
+    % Il backend FastAPI funge da orchestratore centrale tra il layer di presentazione (React), il motore inferenziale (modello LLM) e il database a grafo (Blazegraph).
+    }\label{fig:arch_logica}
+  \end{figure}
+
+  L'infrastruttura dati su cui si appoggia l'LLM Query Builder è costituita da Fedora e Blazegraph. 
+  Blazegraph, in particolare, opera come triplestore ad alte prestazioni per il Datavault, fornendo l'endpoint SPARQL interrogato dal nostro sistema.
+  Il lavoro è consistito nel creare un layer intermedio capace di dialogare fluidamente con Blazegraph, astraendo la sintassi del linguaggio SPARQL dall'interfaccia esposta al ricercatore.
+
+  \subsection{I tre layer del sistema}\label{subsec:tre_layer}
+    A livello logico, il sistema suddivide il flusso di lavoro in tre layer:
+    \begin{itemize}
+      \item \textbf{Presentazione (Datavault Browser)}: applicazione React con due barre di ricerca testuale, una per una ricerca google-like \code{<SearchField/>} e una per una ricerca avanzata con il tool \code{<LLMSearchBar/>} selezionabili da un bottone centrato sopra di esse.
+      In modalità ``Assistente IA'', è possibile la visualizzazione della query SPARQL generata per utenti più esperti. Raccoglie l'input testuale dell'utente e lo invia al backend.
+      \item \textbf{Applicativo (LLM Query Builder backend, FastAPI)}: il ``cervello'' del sistema che riceve la domanda naturale, dirige il flusso:
+      
+      \begin{center}
+        \begin{tikzpicture}[
+          node distance=0.8cm,
+          stepbox/.style={rectangle, draw=black, thick, rounded corners, minimum height=0.9cm, inner sep=6pt, align=center, fill=blue!5, font=\small},
+          arrow/.style={-Latex, thick}
+        ]
+          \node[stepbox] (prompt) {Costruzione\\del prompt};
+          \node[stepbox, right=of prompt] (inferenza) {Inferenza\\LLM};
+          \node[stepbox, right=of inferenza] (validazione) {Validazione};
+          \node[stepbox, right=of validazione] (esecuzione) {Esecuzione\\SPARQL};
+          \draw[arrow] (prompt) -- (inferenza);
+          \draw[arrow] (inferenza) -- (validazione);
+          \draw[arrow] (validazione) -- (esecuzione);
+        \end{tikzpicture}
+      \end{center}
+
+      e gestisce gli errori (query malformate, allucinazioni, timeout, richieste out-of-domain) e restituisce risultati strutturati al frontend.
+      \item \textbf{LDati (Datavault / Blazegraph)}: immagazzina i milioni di triple RDF del Datavault, esegue la query SPARQL ricevuta dal backend e ne restituisce i risultati grezzi.
+    \end{itemize}
+
+  \subsection{Il flusso end-to-end di una richiesta}\label{subsec:flusso_e2e}
+
+    Una richiesta tipica attraversa il sistema secondo i seguenti passi:
+
+    \begin{enumerate}
+      \item L'utente digita una domanda in linguaggio naturale (es.\ ``Mostrami le immagini scansionate con una Nikon nel 2022'') nella barra di ricerca del frontend.
+      \item Il frontend invia un \code{HTTP POST} al backend con il testo della domanda.
+      \item Il backend costruisce il prompt completo (system prompt con le regole di generazione + domanda dell'utente, si veda \cref{subsec:regole}) e lo sottopone al modello LLM.\@
+      \item Il modello genera una query SPARQL (o un JSON di errore, se la richiesta è fuori dominio).
+      \item Il backend ripulisce e valida l'output (si veda il ``sanitizzatore'', \cref{subsec:fastapi}).
+      \item Se valida, la query viene eseguita su Blazegraph.
+      \item I risultati vengono trasformati in struttura ad albero e restituiti al frontend, che li visualizza in forma navigabile.
+    \end{enumerate}
+
+  \subsection{Scelte tecnologiche principali}\label{subsec:scelte_tech}
+    Il sistema combina le seguenti tecnologie, ciascuna scelta per ragioni specifiche legate ai vincoli del progetto:
+
+    \begin{itemize}
+      \item \textbf{React} (frontend): per la parte di presentazione, già descritta funzionalmente nel \cref{chap:prototipo}.
+      \item \textbf{FastAPI} (backend): scelto per la type safety offerta da Pydantic, la documentazione automatica, le performance asincrone e la facilità di integrazione diretta con PyTorch/Transformers per servire il modello.
+      \item \textbf{Phi-3-mini} (modello LLM base): dimensione contenuta (3.8 miliardi di parametri) che rende fattibile il fine-tuning mantenendo buone performance di base su compiti di generazione strutturata.
+      \item \textbf{Unsloth + LoRA} (fine-tuning): Unsloth velocizza il fine-tuning e riduce il consumo di memoria; LoRA (Low-Rank Adaptation) permette di adattare il modello aggiornando solo un numero ridotto di parametri, evitando i costi proibitivi del full fine-tuning.
+      \item \textbf{Blazegraph} (triplestore): tecnologia già in uso presso DH.ARC per il Datavault, con supporto nativo a SPARQL 1.1 e scalabilità fino a centinaia di milioni di triple.
+    \end{itemize}
+
+    % Lo sviluppo iterativo dei componenti in Python e del frontend in React è stato facilitato dall'impiego di ambienti di sviluppo avanzati basati su agenti che hanno permesso di ottimizzare la stesura del codice e testare rapidamente le configurazioni dei prompt di sistema direttamente all'interno della codebase.
 
 \section{Pipeline di fine-tuning dell'LLM}\label{sec:finetuning}
-Per ottenere traduzioni accurate dal linguaggio naturale a SPARQL, l'utilizzo di un LLM generico si è rivelato insufficiente, rendendo necessario un processo di domain adaptation tramite fine-tuning.
-    \subsection{Dataset generativo e schema SPARQL}\label{subsec:dataset_gen}
-    Il cuore dell'addestramento è basato su un dataset generativo, prodotto tramite lo script \code{genera\_dataset.py}.
-    La versione finale (\textit{v4}) comprende 16 categorie distinte di query, progettate per coprire l'intero spettro delle interrogazioni tipiche del dominio umanistico.
-    Durante la fase di validazione, l'analisi delle chiamate di rete fallite aveva evidenziato un tasso di errore significativo dovuto a una scorretta generazione della sintassi SPARQL\@.
-    Nello specifico, il modello tendeva a fallire a causa di un'errata gestione dei prefissi dei metadati.
-    Per risolvere la problematica in modo strutturale, si è proceduto a raffinare gli esempi all'interno del dataset di addestramento, correggendo esplicitamente il modo in cui il modello mappa e dichiara i prefissi ontologici, e gestendo puntualmente i \textit{type-mismatches} tra proprietà testuali e numeriche.
+  Per ottenere traduzioni accurate dal linguaggio naturale a SPARQL, l'utilizzo di un LLM generico si è rivelato insufficiente: un modello addestrato su testo web conosce SPARQL in linea di principio, ma non è ottimizzato per generare query corrette per lo specifico schema del Datavault, rischiando di allucinare predicati inesistenti o di non comprendere le particolarità dell'ontologia reale. Si è resa quindi necessaria una fase di \textit{domain adaptation} tramite fine-tuning.
 
-    \subsection{Configurazione dell'addestramento con Unsloth}\label{subsec:unsloth}
-    Per ottimizzare i tempi di addestramento e ridurre l'impronta in memoria VRAM, la pipeline è stata implementata avvalendosi della libreria Unsloth.
-    La configurazione ha previsto l'uso di precisione mista (\code{fp16} e \code{bf16}) e tecniche di \textit{gradient checkpointing}.
-    Inoltre, l'impiego del \textit{data packing} ha permesso di concatenare sequenze più brevi per massimizzare l'efficienza computazionale durante l'aggiornamento dei pesi.
+  \subsection{Dataset generativo e schema SPARQL}\label{subsec:dataset_gen}
+    L'addestramento è stato basato su un dataset generativo, prodotto tramite lo script \code{genera\_dataset.py} secondo un approccio a \textbf{template parametrici}: per ciascuna categoria di query viene definita una funzione Python che, dati alcuni parametri (un anno, un nome di dispositivo, un formato file, ecc.), restituisce la query SPARQL corrispondente già popolata con quei valori. 
+    La domanda in linguaggio naturale che accompagna ciascuna query viene generata in parallelo variando lessico e struttura della frase, in modo da esporre il modello a una pluralità di formulazioni per lo stesso intento.
+
+    \subsubsection{Il ciclo di generazione}
+      Il cuore del generatore è il ciclo di costruzione del dataset, riportato (in forma semplificata) di seguito:
+
+      \begin{lstlisting}[language=python, caption=Struttura del ciclo di generazione del dataset]
+def crea_dataset_massivo(target: int = 10000):
+  # ... inizializzazione contatori ...
+  tipi_sparql = list(range(1, 14))
+
+  while conteggio < target:
+    # Iniezione controllata di esempi Fuori Dominio
+    forza_ood = (ood_count < ood_target) and (
+      sparql_count >= sparql_target or random.random() < 0.15
+    )
+    if forza_ood:
+      frase = random.choice(out_of_domain)
+      query = '{"error": "OUT_OF_DOMAIN"}'
+      ood_count += 1
+    else:
+      # Estrazione di una categoria e popolamento del template
+      tipo = random.choice(tipi_sparql)
+      if tipo == 1:
+        ...  # popolamento template categoria 1
+      elif tipo == 2:
+        ...  # popolamento template categoria 2
+      # [...]
+      else:  # tipo == 13
+        ...  # popolamento template categoria 13
+
+    # Salvataggio in formato JSONL pronto per il fine-tuning,
+    # con lo stesso system prompt usato in inferenza
+    riga_dataset = {
+      "messages": [
+        {"role": "system",  "content": SYSTEM_PROMPT},
+        {"role": "user",    "content": frase},
+        {"role": "assistant", "content": query},
+      ]
+    }
+\end{lstlisting}
+
+Questa struttura garantisce due proprietà desiderabili per il dataset: una distribuzione controllata tra le diverse categorie di query (evitando lo sbilanciamento verso le categorie più semplici da generare), e un'iniezione mirata di esempi out-of-domain in proporzione fissa (circa il 10\% del totale), necessaria affinché il modello impari a riconoscere e rifiutare richieste estranee al dominio del Datavault senza che questo comportamento venga sotto-rappresentato nel training.
+Inoltre, l'approccio generativo ha man mano permesso di raffinare gli esempi, correggendo a monte gli errori sistematici nella gestione dei prefissi ontologici e dei metadati emersi durante le prime fasi di test del modello.
+
+\subsubsection{Le 13 categorie di query SPARQL (+1 Out-of-Domain)}
+
+La versione finale del generatore comprende 13 funzioni template, ciascuna corrispondente a un intento di ricerca distinto. Le funzioni sono state progettate per coprire lo spettro delle interrogazioni tipiche del dominio umanistico, più la gestione separata delle query fuori dominio:
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabularx}{\textwidth}{cl>{\raggedright\arraybackslash}X}
+        \toprule
+        \textbf{\#} & \textbf{Funzione} & \textbf{Categoria} \\
+        \midrule
+        1  & \code{query\_autore\_anno}    & Ricerca combinata: autore dello scatto + anno \\
+        2  & \code{query\_dispositivo}     & Ricerca per dispositivo di acquisizione (\code{exif:make}) \\
+        3  & \code{query\_anno}            & Ricerca generica per anno \\
+        4  & \code{GOLDEN\_QUERY\_LIBERA}  & Richiesta dell'intero archivio (``mostrami tutto'') \\
+        5  & \code{query\_container}       & Ricerca in una cartella/container (\code{ldp:contains+}) \\
+        6  & \code{query\_testo}           & Ricerca full-text su nome file (\code{ebucore:filename}) \\
+        7  & \code{query\_formato}         & Filtro per formato/MIME type (es.\ \code{image/jpeg}) \\
+        8  & \code{query\_data\_esatta}    & Ricerca per data precisa (anno, mese, giorno) \\
+        9  & \code{query\_intervallo\_anni} & Ricerca per intervallo temporale (range di anni) \\
+        10 & \code{query\_not\_anno}       & Negazione: esclusione di un anno specifico \\
+        11 & \code{query\_or\_formati}     & OR logico tra due formati file \\
+        12 & \code{query\_limite\_custom}  & Paginazione: restituzione degli ultimi N file \\
+        13 & \code{query\_uploader}        & Ricerca per autore del caricamento (\code{fedora:createdBy}) \\
+        \midrule
+        --- & \textit{(separato)} & Out-of-Domain: richieste estranee al dominio ($\sim$10\% del dataset) \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Le 13 categorie di query SPARQL generate da \code{genera\_dataset.py}, più la categoria Out-of-Domain gestita a parte nel ciclo di generazione.}\label{tab:categorie_template}
+\end{table}
+Si noti come le categorie 1 e 13 condividano lo stesso intento superficiale (``ricerca per autore'') ma si distinguano per il predicato RDF target (\code{exif:artist} per l'autore dello scatto, \code{fedora:createdBy} per chi ha effettuato il caricamento): questa distinzione, esplicitata anche nella Regola 2 del system prompt (\cref{subsec:regole}), rappresenta uno degli edge case linguistici più rilevanti affrontati nella progettazione del dataset.
+
+\begin{comment}
+\subsubsection{Edge case e bug risolti durante la generazione}\label{subsec:edge_cases_generazione}
+
+Durante la fase di validazione, l'analisi delle query fallite aveva evidenziato un tasso di errore significativo dovuto a una scorretta generazione della sintassi SPARQL, in particolare a causa di un'errata gestione dei prefissi dei metadati. Per risolvere la problematica in modo strutturale, si è proceduto a raffinare gli esempi all'interno del dataset di addestramento, correggendo esplicitamente il modo in cui il modello mappa e dichiara i prefissi ontologici, e gestendo puntualmente i \textit{type-mismatch} tra proprietà testuali e numeriche. Nello specifico, gli edge case principali risolti sono stati:
+
+\begin{itemize}
+  \item \textbf{Type mismatch su date}: il formato del filtro temporale era inizialmente incoerente con \code{xsd:dateTime} --- risolto normalizzando il formato nei template e, come descritto nella Regola 6 del system prompt, imponendo il confronto tramite \code{STR()} anziché tramite tipi di dato tipizzati.
+  \item \textbf{Case-sensitivity nei filtri di negazione} --- risolto normalizzando i predicati nel template generatore.
+  \item \textbf{Generazione di date calendarialmente non valide} (es.\ 30 febbraio) --- risolto validando le date generate con la libreria Python \code{datetime}.
+  \item \textbf{Ambiguità del separatore nelle date EXIF} (\code{':'} vs \code{'-'}) --- risolto unificando il formato nel dataset.
+\end{itemize}
+
+\subsubsection{Schema RDF reale e un bug di produzione nel namespace EXIF}\label{subsec:bug_exif_namespace}
+
+%
+% TODO: tabella dei predicati reali con frequenza (dati dalla query di
+% frequenza metadati lanciata su Blazegraph)
+%
+% \begin{table}[h]
+% \centering
+% \begin{tabular}{lll}
+% \toprule
+% Predicato & Frequenza & Significato \\
+% \midrule
+% rdf:type & 2.707.278 & Tipizzazione della risorsa \\
+% ldp:contains & 676.186 & Relazione di contenimento container -> risorsa \\
+% ebucore:filename & 674.985 & Nome del file \\
+% ebucore:hasMimeType & 674.985 & Tipo MIME della risorsa \\
+% premis:hasSize & 674.985 & Dimensione del file \\
+% exif:dateTime & 674.959 & Data/ora di acquisizione \\
+% exif:make / exif:model & 674.959 & Dispositivo di acquisizione \\
+% exif:imageWidth / imageLength & 672.607 & Dimensioni in pixel \\
+% dc:title & 1.196 & Titolo (solo sui container) \\
+% \bottomrule
+% \end{tabular}
+% \caption{Predicati principali dello schema RDF del Datavault, con frequenza osservata}
+% \label{tab:schema_predicati}
+% \end{table}
+%
+
+Durante l'analisi della distribuzione dei predicati nel triplestore di produzione è emerso che il namespace EXIF effettivamente presente in Blazegraph è malformato: \code{http://wwww3org/2003/12/exif/ns\#}, anziché lo standard \code{http://www.w3.org/2003/12/exif/ns\#} (mancano i due punti e il prefisso \code{www.} corretto). Il bug è stato confermato eseguendo una query SPARQL di verifica diretta sull'endpoint:
+
+\begin{lstlisting}[language=bash, caption=Query di verifica del namespace EXIF reale]
+SELECT DISTINCT ?p WHERE {
+  ?s ?p ?o .
+  FILTER(CONTAINS(STR(?p), "exif"))
+} LIMIT 5
+\end{lstlisting}
+
+\paragraph{Impatto del bug.} Questo mismatch ha un impatto sistemico: qualunque query SPARQL generata utilizzando il namespace EXIF \textit{canonico} (quello atteso da un modello addestrato su conoscenza generale o su un dataset che rispetti lo standard W3C) restituisce sistematicamente zero risultati per tutti i predicati EXIF, indipendentemente dalla correttezza logica della query stessa. Poiché i predicati EXIF coprono la quasi totalità delle risorse del Datavault, questo bug avrebbe potuto compromettere la quasi totalità delle interrogazioni utili del sistema.
+
+\paragraph{Soluzione adottata: allineamento al dato reale, non correzione.} A differenza di un approccio ``correttivo'' (normalizzare il namespace malformato a quello standard prima dell'esecuzione della query), la soluzione adottata è stata l'\textbf{allineamento sistematico al namespace reale}, poiché il typo è presente fisicamente nei dati e non è modificabile lato Datavault. Qualunque normalizzazione verso il namespace standard avrebbe prodotto query sintatticamente corrette ma semanticamente vuote. La soluzione è stata applicata in due punti della pipeline:
+
+\begin{enumerate}
+  \item \textbf{Generazione del dataset di training} (\code{genera\_dataset.py}): il prefisso malformato è stato hardcoded esplicitamente tra i prefissi fissi usati per generare gli esempi di training, con un commento esplicito a documentazione della scelta:
+\begin{lstlisting}[language=python, caption=Prefissi hardcoded nel generatore del dataset]
+# Il prefisso exif MANTIENE il typo "wwww3org" per matchare il tuo DB reale
+PREFISSI = (
+  "PREFIX exif: <http://wwww3org/2003/12/exif/ns#>\n"
+  # ...
+)
+\end{lstlisting}
+  In questo modo il modello, durante il fine-tuning, apprende direttamente a generare query con il namespace realmente presente in produzione.
+  \item \textbf{Backend di inferenza} (\code{main.py}): per garantire robustezza anche nel caso in cui il modello generi (o allucini) un prefisso diverso da quello atteso, il backend rimuove qualunque blocco di prefissi generato dall'LLM e re-inietta forzatamente un blocco di prefissi hardcoded, contenente anch'esso il namespace malformato (si veda \cref{subsec:fastapi} per il dettaglio del sanitizzatore).
+\end{enumerate}
+
+\paragraph{Considerazioni.} Questa soluzione, per quanto pragmatica, espone una fragilità intrinseca dell'approccio: il sistema è ora \textit{accoppiato} a un errore presente nei dati di produzione. Se in futuro il Datavault venisse corretto o migrato verso un namespace EXIF standard, sia il dataset di training sia il backend richiederebbero un aggiornamento sincronizzato per evitare di reintrodurre lo stesso problema in forma invertita. Questo aspetto viene ripreso come punto di attenzione nel \cref{chap:conclusioni} (sviluppi futuri) e il suo impatto sulle metriche di valutazione è discusso nel \cref{chap:valutazione}.
+
+\end{comment}
+
+\newpage
+
+\subsection{Configurazione dell'addestramento con Unsloth}\label{subsec:unsloth}
+    Per ottimizzare i tempi di addestramento e ridurre l'impronta in memoria VRAM, la pipeline è stata implementata avvalendosi della libreria Unsloth, che fornisce un'integrazione nativa e ottimizzata per il fine-tuning con LoRA (Low-Rank Adaptation) su modelli come Phi-3.
+
+    \subsubsection{L'algoritmo LoRA}
+        LoRA evita i costi proibitivi di un full fine-tuning (che richiederebbe risorse GPU non disponibili sull'hardware consumer usato per il training) congelando i pesi originali del modello e introducendo, per ciascuna matrice di pesi $W$ presa di mira, un aggiornamento di basso rango: $W' = W + \frac{\alpha}{r}BA$ dove $B \in \mathbb{R}^{d \times r}$ e $A \in \mathbb{R}^{r \times k}$, con il rank $r \ll \min(d,k)$. Durante il training vengono aggiornate solamente le matrici $A$ e $B$, riducendo il numero di parametri allenabili rispetto ai miliardi di parametri del modello completo.\\
+        Nel nostro caso $r = 16 = \alpha$ (quindi $\alpha/r = 1$, nessuno scaling aggiuntivo dell'aggiornamento), applicato sia ai proiettori di attention (\code{q/k/v/o\_proj}) sia ai proiettori del blocco feed-forward (\code{gate/up/down\_proj}): una scelta più estensiva rispetto a una LoRA limitata alla sola attention, che aumenta la capacità del modello di adattarsi al vocabolario specifico del dominio (predicati RDF, sintassi SPARQL) a fronte di un numero di parametri allenabili comunque contenuto grazie al rank ridotto.
+
+\subsubsection{Iperparametri utilizzati}\label{subsec:hyperparams}
+
+\begin{table}[h]
+  \centering
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{@{} p{6.5cm} >{\raggedright\arraybackslash}X @{}}
+  \toprule
+  \textbf{Parametro} & \textbf{Valore} \\
+  \midrule
+  \textbf{Modello base} & \code{unsloth/Phi-3-mini-4k-instruct} \\
+  \midrule
+  \multicolumn{2}{@{}l}{\textbf{Configurazione LoRA}} \\
+  \addlinespace
+  \quad LoRA rank ($r$) & 16 \\
+  \quad LoRA alpha & 16 \\
+  \quad LoRA dropout & 0 \\
+  \quad Target modules & \code{q\_proj, k\_proj, v\_proj, o\_proj,} \newline \code{gate\_proj, up\_proj, down\_proj} \\
+  \quad Bias & \code{none} \\
+  \quad Gradient checkpointing & \code{True} \\
+  \quad Random state & 3407 \\
+  \bottomrule
+  \end{tabularx}
+  \caption{Iperparametri di fine-tuning LoRA (1/2): modello base e configurazione dell'adapter LoRA, configurato tramite Unsloth.}\label{tab:hyperparams_lora}
+\end{table}
+\newpage
+\begin{table}[ht]
+  \centering
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{@{} p{6.5cm} >{\raggedright\arraybackslash}X @{}}
+  \toprule
+  \textbf{Parametro} & \textbf{Valore} \\
+  \midrule
+  \quad Batch size (per device) & 1 \\
+  \quad Gradient accumulation steps & 8 \\
+  \quad Batch size effettivo & 8 (1 $\times$ 8) \\
+  \quad Warmup steps & 10 \\
+  \quad Epochs & 1 \\
+  \quad Learning rate & \code{2e-4} \\
+  \quad Optimizer & \code{adamw\_8bit} \\
+  \quad Weight decay & 0.01 \\
+  \quad LR scheduler & \code{linear} \\
+  \quad Seed & 3407 \\
+  \quad fp16 / bf16 & \code{False} / \code{False} \\
+  \quad Packing & \code{False} \\
+  \quad Dataset num proc & 2 \\
+  \quad Max sequence length & 1024 token \\
+  \quad Step totali eseguiti & 1188 \\
+  \quad Loss finale & 0.010 \\
+  \bottomrule
+  \end{tabularx}
+  \caption{Iperparametri di fine-tuning LoRA (2/2): configurazione del training tramite \code{SFTTrainer} (libreria TRL).}\label{tab:hyperparams_training}
+\end{table}
+
+Il valore di \code{max\_seq\_length} è stato fissato a 1024 token: sufficiente a contenere il system prompt (regole di generazione), la domanda dell'utente in linguaggio naturale, e la query SPARQL attesa, mantenendo comunque un footprint di memoria contenuto durante il training su GPU con VRAM limitata.
+ 
+Il codice di configurazione effettivamente utilizzato è riportato di seguito. Il primo passo è il caricamento del modello base tramite Unsloth:
+
+\vfill
+ 
+\begin{lstlisting}[language=python, caption=Caricamento del modello base]
+import torch
+from unsloth import FastLanguageModel
+ 
+max_seq_length = 1024
+dtype = torch.float16
+load_in_4bit = False
+ 
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/Phi-3-mini-4k-instruct",
+    max_seq_length = max_seq_length,
+    dtype = dtype,
+    load_in_4bit = load_in_4bit,
+)
+\end{lstlisting}
+ 
+Da notare che il modello viene caricato in precisione \code{float16} e senza quantizzazione a 4 bit: questo è distinto dai flag \code{fp16}/\code{bf16} del \code{SFTTrainer} (entrambi \code{False}), che controllano invece l'uso di \textit{mixed precision training} (autocast durante il calcolo del gradiente) e non la precisione nativa dei pesi del modello.
+ 
+Segue la configurazione dell'adapter LoRA e del training vero e proprio:
+ 
+\begin{lstlisting}[language=python, caption=Configurazione dell'adapter LoRA tramite Unsloth]
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 16,
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                       "gate_proj", "up_proj", "down_proj"],
+    lora_alpha = 16, lora_dropout = 0,
+    bias = "none",   use_gradient_checkpointing = True,
+    random_state = 3407,
+)
+\end{lstlisting}
+ 
+\begin{lstlisting}[language=python, caption=Configurazione del training tramite SFTTrainer (libreria TRL)]
+from trl import SFTTrainer, SFTConfig
+trainer = SFTTrainer(
+    model = model, tokenizer = tokenizer,
+    train_dataset = train_dataset,
+    eval_dataset = eval_dataset,
+    args = SFTConfig(
+        per_device_train_batch_size = 1,
+        gradient_accumulation_steps = 8,
+        warmup_steps = 10,
+        num_train_epochs = 1,
+        learning_rate = 2e-4,
+        fp16 = False, bf16 = False,
+        logging_steps = 10,
+        eval_strategy = "steps",
+        eval_steps = 50,
+        save_strategy = "steps",
+        save_steps = 100,
+        save_total_limit = 2,
+        report_to = "none",
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        output_dir = "outputs",
+        dataset_text_field = "text",
+        max_seq_length = max_seq_length,
+        dataset_num_proc = 2,
+        packing = False,
+    ),
+)
+\end{lstlisting}
 
 
+% =============================================================================
 \section{Architettura del backend e integrazione frontend}\label{sec:backend}
-    \subsection{Inference engine (FastAPI)}\label{subsec:fastapi}
-    L'orchestrazione delle richieste è demandata a un backend sviluppato in Python tramite il framework FastAPI.\@
-    L'inference engine è stato calibrato per garantire la consistenza del \textit{system prompt} a ogni invocazione, vincolando il modello a mantenere il ruolo di traduttore tecnico.
-    Particolare attenzione è stata posta alla corretta generazione del token EOS (\textit{End Of Sentence}), fondamentale per troncare l'output del modello ed evitare allucinazioni aggiuntive in coda alla query SPARQL.\@
+% =============================================================================
 
-    Lo sviluppo iterativo di questi componenti in Python e del frontend in React è stato ampiamente facilitato dall'impiego di ambienti di sviluppo avanzati basati su agenti, come Antigravity IDE, che hanno permesso di ottimizzare la stesura del codice e testare rapidamente le configurazioni dei prompt di sistema direttamente all'interno della codebase.
+\subsection{Inference engine (FastAPI)}\label{subsec:fastapi}
+Il coordinamento delle richieste è affidato a un backend sviluppato in Python tramite FastAPI.\@
+L'inference engine è stato calibrato per garantire la consistenza del \textit{system prompt} a ogni invocazione, vincolando il modello a mantenere il ruolo di traduttore tecnico.
+È stata posta particolare attenzione alla corretta generazione del token EOS (\textit{End Of Sentence}), fondamentale per troncare l'output del modello ed evitare allucinazioni aggiuntive in coda alla query SPARQL.\@
 
-    \subsection{Integrazione con Blazegraph tramite proxy Vite}\label{subsec:vite}
-    Sul versante client, l'integrazione è gestita tramite un proxy configurato in Vite.
-    Questa architettura previene problemi legati alle policy CORS e instrada le query SPARQL generate direttamente dall'interfaccia React all'endpoint di Blazegraph, garantendo un flusso dati bidirezionale sicuro e performante tra l'utente e il Datavault.
+  \subsubsection{Caricamento del modello e fusione dell'adapter LoRA}
 
+  \begin{sloppypar}
+  A differenza del notebook di training (dove il modello viene caricato tramite \code{FastLanguageModel} di Unsloth), il backend di inferenza carica il modello tramite le primitive standard di Hugging Face Transformers e PEFT, eseguendo il caricamento una sola volta all'avvio del server e non ad ogni richiesta, per evitare il costo proibitivo di ricaricare e fondere il modello a ogni chiamata:
+  \end{sloppypar}
 
-\section{Formato dati: dataset\_datavault\_v4.jsonl}\label{sec:dataset}
-    \subsection{Le 8 regole di generazione SPARQL}\label{subsec:regole}
-    Il formato dati alla base del fine-tuning, consolidato nel file \\ \code{dataset\_datavault\_v4.jsonl}, struttura la conoscenza del dominio in formato JSONL.\@
-    Per istruire l'LLM, sono state codificate 8 specifiche regole di generazione SPARQL.\@
-    Queste regole impongono al modello restrizioni rigorose su quali relazioni attraversare, come filtrare le date e come gestire la paginazione e i limiti dei risultati.
+  \begin{lstlisting}[language=python, caption=Caricamento e fusione dell'adapter LoRA all'avvio del server FastAPI]
+@app.on_event("startup")
+async def load_model():
+  global model, tokenizer
+  print("Inizializzazione del motore LLM...")
 
-    \subsection{Gestione degli errori: OUT\_OF\_DOMAIN}\label{subsec:errori}
-    Un requisito fondamentale per l'affidabilità in un contesto accademico è la capacità del sistema di ammettere i propri limiti.
-    Nel dataset è stata implementata un'architettura di \textit{error handling} JSON-based: quando l'utente pone una domanda irrilevante rispetto allo schema del Datavault, il modello è addestrato a non tentare di forzare una query SPARQL, ma a restituire un esplicito stato \code{OUT\_OF\_DOMAIN}.
-    Questo fallback previene l'esecuzione di query malformate e migliora la trasparenza dell'interfaccia utente.
+  tokenizer = AutoTokenizer.from_pretrained(ADAPTER_PATH)
 
+  # Usiamo la versione base per evitare conflitti di vocabolario
+  base_model = AutoModelForCausalLM.from_pretrained(
+    "unsloth/Phi-3-mini-4k-instruct",
+    torch_dtype=torch.float32,
+    device_map="cpu"
+  )
 
+  # Fondiamo i pesi LoRA addestrati nel modello base
+  peft_model = PeftModel.from_pretrained(base_model, ADAPTER_PATH)
+  model = peft_model.merge_and_unload()
+  print("Fusione completata! Modello Datavault-LLM pronto...")
+\end{lstlisting}
+
+  \begin{sloppypar}
+  Commentiamo due scelte architetturali degne di nota: \code{merge\_and\_unload()} fonde \emph{fisicamente} i pesi dell'adapter LoRA nel modello base, anziché mantenerli separati durante l'inferenza, eliminando l'overhead computazionale di applicare l'aggiornamento di basso rango a ogni forward pass; e \code{device\_map=``cpu''} con \code{torch\_dtype=torch.float32} rispecchiano un deployment senza GPU dedicate, dove la piena precisione a 32 bit evita instabilità numeriche nella fusione dei pesi (lo stesso tipo di instabilità osservato con precisioni ridotte durante il training). % chktex 36
+  \end{sloppypar}
+
+  \subsubsection{La route di generazione}
+
+  Ad ogni richiesta dell'utente, il backend espone l'endpoint \code{POST /generate}, che riceve la domanda in   linguaggio naturale e restituisce la query SPARQL (o l'errore Out-of-Domain) generata dal modello:
+
+  \vfill
+
+  \begin{lstlisting}[language=python, caption=Route di generazione della query SPARQL]
+@app.post("/generate")
+async def generate_sparql(request: ChatRequest):
+  if not model or not tokenizer:
+    raise HTTPException(status_code=503, detail="Modello non ancora caricato")
+  try:
+    # Costruzione dei messaggi basata sul System Prompt identico al training
+    messages = [
+      {"role": "system", "content": SYSTEM_PROMPT_TEXT},
+      {"role": "user", "content": request.message}
+    ]
+
+    # Uso del chat template nativo del modello
+    prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    inputs = tokenizer(prompt, return_tensors="pt")
+
+    model.eval()
+    end_token_id = tokenizer.convert_tokens_to_ids("<|end|>")
+    terminators = [tokenizer.eos_token_id, end_token_id]
+
+    # Inferenza pura senza gradienti
+    with torch.no_grad():
+      outputs = model.generate(
+        **inputs,
+        max_new_tokens=250,
+        do_sample=False,
+        pad_token_id=tokenizer.eos_token_id,
+        eos_token_id=terminators
+      )
+
+    # Estrazione della risposta rimuovendo i token iniziali
+    input_length = inputs['input_ids'].shape[1]
+    generated_tokens = outputs[0][input_length:]
+    assistant_reply = tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
+
+    # Segue il sanitizzatore
+    return {"response": sanitized_query}
+\end{lstlisting}
+
+\newpage
+
+Abbiamo tre aspetti di questa implementazione particolarmente significativi:
+
+\begin{itemize}
+  \item \textbf{Doppio token di stop}: il modello Phi-3 utilizza il token speciale \code{<|end|>} per segnalare la fine di un turno di conversazione, distinto dal token EOS standard del tokenizer. Includere \emph{entrambi} in \code{terminators} si è rivelato necessario: in fase di sviluppo, l'omissione del token \code{<|end|>} causava generazione continuata oltre la query attesa, lo stesso fenomeno di hallucination continuata osservato con \code{packing=True} in training.
+  \item \textbf{Generazione deterministica}: \code{do\_sample=False} disabilita il campionamento stocastico, rendendo la generazione completamente deterministica. Per un compito di traduzione verso un linguaggio formale come SPARQL, dove esiste tipicamente un'unica forma corretta attesa, è preferibile il determinismo.
+  \item \textbf{Limite di token generati}: \code{max\_new\_tokens=250} pone un tetto alla lunghezza della risposta generata, sufficiente per la forma di query vincolata dalla Regola 1 del system prompt (\cref{subsec:regole}), oltre a fungere da rete di sicurezza contro eventuali generazioni anomale che non si arrestino correttamente sui token di stop.
+\end{itemize}
+
+\subsubsection{Il sanitizzatore: parsing e validazione dell'output}
+
+Il testo grezzo generato dal modello (\code{assistant\_reply}) non viene restituito direttamente al frontend, ma passa attraverso una fase di post-processing che nel codice del backend è internamente chiamata ``sanitizzatore''. Le responsabilità di questo passaggio includono:
+
+\begin{itemize}
+    \item \textbf{Pulizia dei prefissi}: rimozione di eventuali blocchi \code{PREFIX} generati (o allucinati) dal modello, sostituiti dal blocco di prefissi hardcoded e correttamente allineati al namespace reale del Datavault.
+    \item \textbf{Fallback Out-of-Domain}: riconoscimento e gestione del caso in cui il modello restituisca il JSON \code{\{``error'': ``OUT\_OF\_DOMAIN''\}}, da intercettare prima di tentare un'esecuzione SPARQL che fallirebbe.
+    \item \textbf{Fix del formato data}: normalizzazione del formato e del cast \code{STR()} nei filtri sulle date, per garantire coerenza con la Regola 6 del system prompt anche in caso di lievi variazioni nell'output del modello. % chktex 36
+\end{itemize}
+
+\newpage
+
+Il codice qui di seguito illustra l'implementazione in Python di questo modulo, evidenziando l'uso di espressioni regolari (regex) per estrarre in sicurezza il corpo della query.
+
+\begin{lstlisting}[language=python, caption={Implementazione del sanitizzatore nel backend FastAPI.}]
+import re
+import json
+
+# Prefissi hardcoded
+HARDCODED_PREFIXES = """
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX ldp: <http://www.w3.org/ns/ldp#>
+  PREFIX dc: <http://purl.org/dc/elements/1.1/>
+  PREFIX fedora: <http://fedora.info/definitions/v4/repository#>
+  PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>
+  PREFIX exif: <http://wwww3org/2003/12/exif/ns#>
+"""
+
+def sanitize_sparql_query(raw_output: str) -> str:
+  # 1. Gestione rapida delle richieste Fuori Dominio
+  if "OUT_OF_DOMAIN" in raw_output:
+    return '{"error": "OUT_OF_DOMAIN"}'
+  # 2. Isolamento del corpo della query
+  # Cerca la clausola SELECT e cattura tutto il testo
+  match_select = re.search(r"(SELECT\s+DISTINCT.*)", raw_output, 
+                           flags=re.IGNORECASE | re.DOTALL)
+  
+  if not match_select:
+    # Fallback di sicurezza: se non trova la SELECT, ritorna l'output grezzo
+    return raw_output
+      
+  core_query = match_select.group(1).strip()
+  # 3. Fix difensivo sul formato date (Regola 6)
+  # Assicura che la variabile della data sia castata a stringa dentro STRSTARTS
+  core_query = re.sub(
+    r'STRSTARTS\s*\(\s*\?([a-zA-Z0-9_]+)\s*,',
+    r'STRSTARTS(STR(?\1),',
+    core_query
+  )
+  # 4. Assemblaggio finale
+  sanitized_query = f"{HARDCODED_PREFIXES}\n{core_query}"
+  
+  return sanitized_query
+\end{lstlisting}
+
+L'algoritmo di sanitizzazione opera come un filtro di sicurezza a cascata, applicando tre livelli di validazione:
+
+\begin{description}
+    \item[Short-circuit evaluation (Out-of-Domain):] Il primo controllo intercetta la presenza della stringa \code{OUT\_OF\_DOMAIN}.\\
+    Se individuata, la funzione si arresta restituendo il JSON formattato.\\
+    Questa scelta evita che l'engine tenti di fare il parsing di un messaggio di errore trattandolo come se fosse una stringa SPARQL.\@
+    
+    \item[Troncamento tramite Regex (\code{re.search}):] L'LLM, pur addestrato a restituire solo la clausola \code{SELECT}, in alcuni casi limite tendeva ad anticipare la risposta con blocchi \code{PREFIX} parzialmente corretti. L'espressione regolare cattura esclusivamente la stringa a partire dal pattern \code{SELECT DISTINCT}, scartando tutto il testo antecedente. Successivamente, il blocco \code{HARDCODED\_PREFIXES} provvede alla reiniezione dei namespace corretti.
+    
+    \item[Normalizzazione semantica tramite Regex (\code{re.sub}):] Nonostante la chiarezza della Regola 6 nel \textit{system prompt}, in rare occasioni il modello generava filtri temporali omettendo la conversione esplicita \code{STR(?date)}. Dato che i dati in Blazegraph richiedono un confronto lessicale puro su stringhe non standard, l'omissione di questo cast produceva una query formalmente valida ma vuota. L'espressione regolare applica una correzione tipografica ``al volo'', incapsulando dinamicamente la variabile temporale nel costrutto \code{STR()} nel caso in cui fosse assente. % chktex 36
+\end{description}
+
+% =============================================================================
+\newpage
+\section{Formato dati: dataset\_datavault.jsonl}\label{sec:dataset}
+% =============================================================================
+
+Il formato dati alla base del fine-tuning struttura la conoscenza del dominio in formato JSONL:\@ ogni riga è un oggetto JSON contenente una tripla di messaggi (\code{system}, \code{user}, \code{assistant}), pronta per l'addestramento supervisionato tramite \code{SFTTrainer}.
+
+\subsection{Le 8 regole di generazione SPARQL}\label{subsec:regole}
+
+Per istruire l'LLM sono state definite 8 regole di generazione SPARQL, sotto forma di system prompt. 
+Una caratteristica progettuale importante, nonché garanzia di coerenza tra training e inferenza, è che questo system prompt è identico sia in \code{genera\_dataset.py} (training) sia in \code{main.py} (inferenza), eliminando una possibile fonte di \textit{distribution shift} tra le condizioni di addestramento e quelle di utilizzo reale del modello:
+
+\begin{lstlisting}[language=bash, caption=System prompt utilizzato in training e inference (identico in entrambi i file)]
+Sei un traduttore da linguaggio naturale a SPARQL per un Data Vault Fedora. REGOLE ASSOLUTE:
+1. Restituisci SEMPRE e SOLO: SELECT DISTINCT ?image WHERE { ... }. Nessun altra variabile nella SELECT.
+2. Autore scatto: usa exif:artist. Autore caricamento: usa fedora:createdBy.
+3. Dispositivo: usa exif:make.
+4. Formato file: usa ebucore:hasMimeType.
+5. Ricerca testuale: cerca SOLO dentro ebucore:filename. Attenzione: se l'utente cerca parole come "data", "del", "vault", trattale come testo, NON come date.
+6. Date: usa exif:dateTime. Usa SEMPRE STR() nel filtro, es: FILTER(STRSTARTS(STR(?date), "2023:05:10")).
+7. Ricerca in cartelle/container: usa ?container ldp:contains+ ?image e dc:title sul container.
+8. FUORI DOMINIO: Se la richiesta e' estranea all'archivio, rispondi SOLO con il JSON: {"error": "OUT_OF_DOMAIN"}.
+\end{lstlisting}
+
+Queste regole impongono restrizioni al modello su quali relazioni attraversare, come filtrare le date, e come gestire la paginazione e i limiti dei risultati. 
+% Alcune di esse meritano un commento puntuale:
+
+% \begin{itemize}
+%   \item \textbf{Regola 1 (forma della query)}: vincolare l'LLM a generare \emph{sempre} la stessa forma sintattica (\code{SELECT DISTINCT ?image WHERE \{ ... \}}) riduce drasticamente lo spazio di possibili output e di conseguenza la probabilità di errori sintattici o di variabili incoerenti.
+%   \item \textbf{Regola 2 (disambiguazione tra autori)}: distingue esplicitamente l'autore dello scatto fotografico (\code{exif:artist}) dall'autore del caricamento a sistema (\code{fedora:createdBy})---un'ambiguità linguistica reale che il dominio degli utenti umanisti solleva frequentemente.
+%   \item \textbf{Regola 5 (disambiguazione testo/data)}: previene un errore comune in cui parole italiane comuni (``data'', ``del'') vengono erroneamente interpretate dal modello come riferimenti temporali anziché come testo di ricerca libero.
+%   \item \textbf{Regola 6 (formato delle date)}: impone l'uso di \code{STR()} per confrontare le date come stringhe anziché come tipi \code{xsd:dateTime}, una scelta dettata dal formato non standard (\code{YYYY:MM:DD}) con cui le date sono effettivamente memorizzate nei dati EXIF del Datavault.
+%   \item \textbf{Regola 8 (out-of-domain)}: forza il modello a rispondere con un JSON di errore strutturato, anziché tentare di generare comunque una query SPARQL (e quindi rischiare un'allucinazione) per richieste estranee al dominio del Datavault.
+% \end{itemize}
+
+Se le regole devono essere modificate, è necessario aggiornarle in entrambi i punti della codebase: \code{main.py} per un impatto immediato in inferenza, e \code{genera\_dataset.py} nel caso si voglia generare un nuovo dataset e ri-addestrare il modello, al fine di evitare la reintroduzione di un disallineamento tra training e inferenza.
+
+\subsection{Gestione degli errori: OUT\_OF\_DOMAIN}\label{subsec:errori}
+
+Per garantire l'affidabilità è fondamentale che il sistema sia in grado di ammettere i propri limiti. Per questo motivo, nel dataset è stata implementata un'architettura di \textit{error handling} JSON-based: quando l'utente pone una domanda irrilevante rispetto allo schema del Datavault, il modello è addestrato (Regola 8, \cref{subsec:regole}) a non tentare di forzare una query SPARQL, ma a restituire un esplicito stato \code{OUT\_OF\_DOMAIN}. Questo fallback previene l'esecuzione di query malformate e migliora la trasparenza dell'interfaccia utente.
+
+Per riassumere, la tabella seguente elenca il comportamento del sistema nei principali casi di errore gestiti:
+
+\begin{table}[htbp]
+    \centering
+    \renewcommand{\arraystretch}{1.2}
+    % La prima colonna è larga 5cm e in grassetto, la seconda riempie il resto dello spazio
+    \begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash\bfseries}p{5cm} >{\raggedright\arraybackslash}X @{}}
+        \toprule
+        Caso di errore & Comportamento del sistema e strategia di mitigazione \\
+        \midrule
+        Predicato allucinato dal modello 
+        & Prefissi hardcoded re-iniettati dal sanitizzatore (\cref{subsec:fastapi}); la validazione a valle blocca le query contenenti predicati non riconosciuti. \\
+        \addlinespace
+        Query SPARQL malformata 
+        & La validazione sintattica blocca l'esecuzione prima dell'invio al triplestore; un errore strutturato viene restituito al frontend. \\
+        \addlinespace
+        Richiesta Out-of-Domain 
+        & Il modello risponde esclusivamente con il JSON di fallback \code{\{``error'': ``OUT\_OF\_DOMAIN''\}} (Regola 8). \\
+        \addlinespace
+        Generazione ininterrotta \newline (assenza di token EOS) 
+        & Adozione di un doppio token di stop (\code{<|end|>} + EOS standard) abbinato a un limite di sicurezza hardware (\code{max\_new\_tokens=250}). \\
+        \addlinespace
+        Mismatch del namespace EXIF 
+        & Allineamento sistematico al namespace reale presente nei dati di produzione, rinunciando alla correzione canonica a monte. \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Riepilogo dei principali casi di errore gestiti dal sistema e relative strategie di mitigazione adottate.}\label{tab:gestione_errori}
+\end{table}
+
+% \subsection{Estensibilità del sistema e manutenzione futura}\label{subsec:estensibilita}
+
+% L'architettura software e la pipeline di generazione dei dati sono state progettate secondo principi di modularità, al fine di facilitare la manutenzione del sistema e il suo adattamento a futuri cambiamenti nei requisiti o nei formati dei dati. Essendo il sistema fortemente accoppiato alla struttura del Datavault attuale, sono stati previsti due principali punti di estensione strutturale:
+
+% \begin{description}
+%     \item[Aggiunta di nuove categorie di query:] L'espansione delle capacità di traduzione dell'LLM verso nuovi intenti di ricerca richiede un intervento localizzato nello script \code{genera\_dataset.py}. L'architettura a template consente di definire una nuova funzione generatrice e registrarla nel router logico del ciclo di generazione con un impatto minimo sul codice esistente. Qualora la nuova categoria introduca predicati RDF inediti, sarà necessario codificare una nuova direttiva all'interno del \textit{system prompt}.
+%     \item[Aggiornamento dello schema RDF e del System Prompt:] Nell'eventualità in cui l'ontologia del Datavault subisca mutamenti strutturali (ad esempio, l'adozione di un nuovo vocabolario per la conservazione o la normalizzazione alla fonte del bug relativo al namespace EXIF descritto nel \cref{subsec:bug_exif_namespace}), il sistema richiederà un aggiornamento sincronizzato. Le regole codificate nel \textit{system prompt} (\cref{subsec:regole}) dovranno essere modificate parallelamente in \code{main.py} (per riflettere i cambiamenti in inferenza) e in \code{genera\_dataset.py} (per la generazione del nuovo training set). Un cambiamento di questa portata, invalidando le premesse sintattiche apprese dal modello, renderà obbligatorio un nuovo ciclo di \textit{fine-tuning}.
+% \end{description}
+
+% Questa flessibilità architetturale non solo garantisce la longevità del prototipo, ma costituisce la base tecnologica per gli sviluppi futuri del progetto. Come verrà discusso diffusamente nel \cref{chap:conclusioni}, la facilità con cui è possibile orchestrare nuovi addestramenti e manipolare i layer di traduzione apre la strada a integrazioni semantiche più avanzate, suggerendo la possibilità futura di far dialogare l'LLM con ontologie \textit{event-based} più complesse specifiche per il dominio umanistico.
+
+% SVILUPPI FUTURI?
+
+% =============================================================================
 \section{Conclusioni del capitolo}\label{sec:conclusioni_cap4}
-Le scelte architetturali descritte in questo capitolo --- dal raffinamento del dataset per i prefissi, fino all'implementazione del backend FastAPI --- dimostrano come la transizione da un proof-of-concept teorico a uno strumento funzionante richieda un'attenta ingegnerizzazione del dato e del software.
-Nel \cref{chap:valutazione} esamineremo come questa architettura si comporta concretamente in fase di test quantitativo e qualitativo.
+% =============================================================================
+
+Le scelte architetturali descritte in questo capitolo: dallo stack tecnologico basato su Fedora e Blazegraph, alla pipeline di fine-tuning con Unsloth e LoRA, fino all'implementazione del backend FastAPI e al raffinamento del dataset per gestire correttamente prefissi e casi limite; dimostrano come la transizione da un proof-of-concept teorico a uno strumento funzionante richieda un'attenta ingegnerizzazione del dato e del software.
+
+Nel \cref{chap:valutazione} esamineremo come questa architettura si comporta concretamente in fase di test quantitativo e qualitativo, incluso l'impatto del bug del namespace EXIF sulle metriche di precision e recall.
