@@ -18,7 +18,7 @@ Infine, nel \cref{sec:rag}, descriviamo il paradigma RAG come soluzione tecnolog
 \section{Stato dell'arte: dall'interrogazione formale alla ricerca semantica}\label{sec:statoarte}
 \subsection{Il contesto: Digital Humanities e la barriera della ricerca}\label{subsec:dh_barrier}
 
-Nel dominio delle Digital Humanities (DH) e della gestione del patrimonio culturale, la ricerca all'interno di repository RDF rappresenta un ostacolo significativo per chi manca di competenze tecniche avanzate.
+Nel dominio delle Digital Humanities (DH) e della gestione del patrimonio culturale, la ricerca all'interno di repository RDF è un ostacolo per chi manca di competenze tecniche avanzate.
 Come evidenziato in letteratura, lavorare con strumenti come SPARQL impone vincoli rigorosi\cite{Vas25} e richiede una familiarità profonda con ontologie complesse e convenzioni di metadati\cite{Vas24}. 
 
 Tali approcci si basano su query create manualmente, che risultano fragili e difficili da adattare a esigenze mutevoli\cite{Mar25}. Questo pone il ricercatore di fronte all'ostacolo cognitivo della ``scatola vuota'': chi possiede un bisogno informativo vago o in via di definizione viene paralizzato dalla necessità di dichiarare tutto a priori.
@@ -29,9 +29,9 @@ Alla base dei tradizionali sistemi di Information Retrieval (IR) vi è un assunt
 Nel dominio umanistico, tuttavia, l'utente procede per esplorazione.
 
 Questo comportamento è stato teorizzato da Marcia Bates con il modello \textit{berrypicking}\cite{Bat89}: una strategia di ricerca non lineare in cui gli studiosi si muovono iterativamente, aggiustando la rotta e raffinando gli obiettivi man mano che acquisiscono nuove informazioni durante l'esplorazione.
-In un tale scenario di ricerca esplorativa, assume un valore inestimabile il fenomeno della \textit{serendipity}, la scoperta inattesa di pattern rilevanti durante la navigazione dei dati, che gli strumenti tradizionali non incoraggiano, anzi, spesso ostacolano.
+In un tale scenario di ricerca esplorativa, la ricerca esplorativa favorisce la \textit{serendipity}, la scoperta inattesa di pattern rilevanti durante la navigazione dei dati, che gli strumenti tradizionali non incoraggiano, anzi, spesso ostacolano.
 
-Considerando il netto contrasto tra la rigidità sintattica di SPARQL e la natura fluida ed evolutiva della ricerca umanistica, emerge con chiarezza la necessità di un nuovo paradigma di interazione, che consenta ai ricercatori di esprimere bisogni emergenti senza dover ricorrere a linguaggi formali.
+Considerando il netto contrasto tra la rigidità sintattica di SPARQL e la natura fluida ed evolutiva della ricerca umanistica, è quindi necessario un nuovo paradigma di interazione, che consenta ai ricercatori di esprimere bisogni emergenti senza dover ricorrere a linguaggi formali.
 
 \subsection{La ``scatola vuota'' e le tre barriere di SPARQL}\label{subsec:tre_barriere}
 
@@ -122,13 +122,13 @@ Procediamo ora ad analizzare i principi teorici che giustificano il ricorso a un
 
     \subsection{Il nuovo paradigma: ricerca semantica con LLM}\label{subsec:paradigma_semantico}
 
-    L'introduzione di un LLM modifica radicalmente il paradigma di esplorazione dei dati semantici, agendo come un intermediario e traduttore capace di convertire fluidamente il linguaggio naturale in interrogazioni strutturate come query SPARQL.\@
+    L'introduzione di un LLM modifica il paradigma di esplorazione dei dati semantici, agendo come un intermediario e traduttore capace di convertire fluidamente il linguaggio naturale in interrogazioni strutturate come query SPARQL.\@
 
     Questa trasformazione definisce un concetto chiave nell'interazione uomo-dato: non è più il ricercatore a dover imparare il linguaggio della macchina, ma è il sistema stesso che si adatta all'utente, comprendendone le richieste nel formato linguistico naturale. Ne consegue che questo approccio sposta l'intero carico di complessità cognitiva e sintattica dall'utente al sistema computazionale.
 
     Questo trasferimento della complessità si lega esplicitamente al concetto di ``findability'' (trovabilità)\cite{Ros07}. Lo scopo del nuovo sistema non è semplicemente rendere una risorsa formalmente accessibile, ma garantire che essa risulti effettivamente trovabile dal ricercatore nel momento del bisogno.
 
-    La ricerca semantica mediata dall'LLM aumenta in modo decisivo la trovabilità per tre ragioni:
+    La ricerca semantica mediata dall'LLM aumenta la trovabilità per tre ragioni:
 
     \begin{itemize}
         \item abbassa drasticamente la soglia di accesso all'informazione, permettendo a chiunque di fare una domanda diretta al database;

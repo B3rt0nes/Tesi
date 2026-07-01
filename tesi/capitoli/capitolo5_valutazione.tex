@@ -44,80 +44,199 @@ I parametri di esecuzione del test sono i seguenti:
 \end{itemize}
 
 \newpage
-
 \subsection{Distribuzione del test set per categoria}\label{subsec:distribuzione_test}
+
+\vspace{0.5em}
 
 Il test set estratto copre 7 delle 14 categorie di query definite nel generatore (\cref{subsec:dataset_gen}). Come visibile in \cref{tab:distribuzione_test} e \cref{fig:category_distribution}, la distribuzione non è uniforme: la categoria \code{data\_esatta} da sola costituisce quasi la metà del campione (233/500, 46.6\%), mentre alcune categorie di nicchia (es.\@ \code{query\_not\_anno}) non risultano rappresentate. 
 
 Questo sbilanciamento va tenuto presente nell'interpretazione dei risultati: le metriche aggregate sono più informative se lette per categoria (\cref{subsec:metriche_categoria}) che come media generale.
 
-% --- TABELLA E GRAFICO AFFIANCATI PER RISPARMIARE SPAZIO ---
-\begin{figure}[htbp]
+\begin{table}[htbp]
     \centering
-    % Minipage di sinistra per la Tabella
-    \begin{minipage}[c]{0.45\textwidth}
-        \centering
-        \resizebox{0.9\textwidth}{!}{% Adatta la tabella allo spazio della colonna
-        \begin{tabular}{lr}
-        \toprule
-        Categoria & N. esempi \\
-        \midrule
-        data\_esatta        & 233 \\
-        formato\_file       & 66 \\
-        fuori\_dominio      & 57 \\
-        dispositivo         & 40 \\
-        container\_cartella & 30 \\
-        ricerca\_testuale   & 28 \\
-        autore              & 26 \\
-        data\_intervallo    & 20 \\
-        \midrule
-        \textbf{Totale}     & \textbf{500} \\
-        \bottomrule
-        \end{tabular}
-        }
-        \captionof{table}{Distribuzione del test set per categoria euristica.}\label{tab:distribuzione_test}
-    \end{minipage}%
-    \hfill% Spazio flessibile tra tabella e grafico
-    % Minipage di destra per il Grafico
-    \begin{minipage}[c]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/category_distribution.png}
-        \caption{Distribuzione del test set di valutazione (n=500).}\label{fig:category_distribution}
-    \end{minipage}
-\end{figure}
+    \begin{tabularx}{0.85\textwidth}{X r}
+    \toprule
+    Categoria          & N. esempi  \\
+    \midrule
+    \texttt{data\_esatta}        & $233$         \\
+    \texttt{formato\_file}       & $66$          \\
+    \texttt{fuori\_dominio}      & $57$          \\
+    \texttt{dispositivo}         & $40$          \\
+    \texttt{container\_cartella} & $30$          \\
+    \texttt{ricerca\_testuale}   & $28$          \\
+    \texttt{autore}              & $26$          \\
+    \texttt{data\_intervallo}    & $20$          \\
+    \midrule
+    \textbf{Totale}    & \textbf{$500$}\\
+    \bottomrule
+    \end{tabularx}
+    \caption{Distribuzione del test set per categoria euristica.}\label{tab:distribuzione_test}
+\end{table}
 
+% --- BLOCCO 2: GRAFICO PGFPLOTS DA CSV (NON fluttuante) ---
+\noindent
+\begin{minipage}{\textwidth}
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+        ybar,
+        bar width=14pt,
+        width=\textwidth,
+        height=7cm,
+        ylabel={Numero di esempi},
+        xtick={0,1,2,3,4,5,6,7},
+        xticklabels={
+            \texttt{data\_esatta},
+            \texttt{formato\_file},
+            \texttt{fuori\_dominio},
+            \texttt{dispositivo},
+            \texttt{container\_cartella},
+            \texttt{ricerca\_testuale},
+            \texttt{autore},
+            \texttt{data\_intervallo}
+        },
+        x tick label style={rotate=45, anchor=east, font=\small},
+        nodes near coords,
+        nodes near coords align={vertical},
+        every node near coord/.style={font=\footnotesize},
+        ymin=0, ymax=260,
+        enlarge x limits=0.12,
+        ymajorgrids=true,
+        grid style={dashed, gray!30},
+    ]
+    \addplot[fill={rgb,255:red,70;green,130;blue,180}, draw={rgb,255:red,50;green,100;blue,150}] table[
+        x expr=\coordindex,
+        y=count,
+        col sep=space,
+    ] {category_distribution.csv};
+    \end{axis}
+    \end{tikzpicture}
+    \captionsetup{hypcap=false}
+    \captionof{figure}{Distribuzione del test set di valutazione $(n=500)$.}\label{fig:category_distribution}
+\end{minipage}
+
+% --- TABELLA E GRAFICO AFFIANCATI PER RISPARMIARE SPAZIO ---
+% \begin{comment}
+%     \begin{figure}[htbp]
+%         \centering
+%         % Minipage di sinistra per la Tabella
+%         \begin{minipage}[c]{0.45\textwidth}
+%             \centering
+%             \resizebox{0.9\textwidth}{!}{% Adatta la tabella allo spazio della colonna
+%             \begin{tabular}{lr}
+%             \toprule
+%             Categoria & N. esempi \\
+%             \midrule
+%             data\_esatta        & 233 \\
+%             formato\_file       & 66 \\
+%             fuori\_dominio      & 57 \\
+%             dispositivo         & 40 \\
+%             container\_cartella & 30 \\
+%             ricerca\_testuale   & 28 \\
+%             autore              & 26 \\
+%             data\_intervallo    & 20 \\
+%             \midrule
+%             \textbf{Totale}     & \textbf{500} \\
+%             \bottomrule
+%             \end{tabular}
+%             }
+%             \captionof{table}{Distribuzione del test set per categoria euristica.}\label{tab:distribuzione_test}
+%         \end{minipage}%
+%         \hfill% Spazio flessibile tra tabella e grafico
+%         % Minipage di destra per il Grafico
+%         \begin{minipage}[c]{0.5\textwidth}
+%             \centering
+%             \includegraphics[width=\textwidth]{img/category_distribution.png}
+%             % \caption{Distribuzione del test set di valutazione (n=500).}\label{fig:category_distribution}
+%         \end{minipage}
+%     \end{figure}
+% \end{comment}
+
+\newpage
 \subsection{Tempo di generazione}\label{subsec:tempo_generazione}
 
 Il tempo di generazione per query, misurato sulla GPU T4 durante la Fase 1, presenta le seguenti statistiche calcolate sull'intero set di 500 esempi:
 
 % --- TABELLA E GRAFICO AFFIANCATI PER RISPARMIARE SPAZIO ---
+% \begin{comment}
+%     \begin{figure}[htbp]
+%         \centering
+%         % Minipage di sinistra per la Tabella
+%         \begin{minipage}[c]{0.40\textwidth}
+%             \centering
+%             \begin{tabular}{lr}
+%             \toprule
+%             Statistica & Valore (s) \\
+%             \midrule
+%             Media               & 7.45 \\
+%             Deviazione standard & 2.51 \\
+%             Minimo              & 0.65 \\
+%             25° percentile      & 7.64 \\
+%             Mediana             & 8.19 \\
+%             75° percentile      & 8.59 \\
+%             Massimo             & 10.45 \\
+%             \bottomrule
+%             \end{tabular}
+%             % \captionof{table}{Statistiche del tempo di generazione per query (GPU T4).}\label{tab:tempo_generazione}
+%         \end{minipage}%
+%         \hfill% Spazio flessibile tra tabella e grafico
+%         % Minipage di destra per il Grafico
+%         \begin{minipage}[c]{0.55\textwidth}
+%             \centering
+%             \includegraphics[width=\textwidth]{img/generation_time_hist.png}
+%             % \caption{Distribuzione dei tempi di generazione su GPU T4.}\label{fig:generation_time_hist}
+%         \end{minipage}
+%     \end{figure}
+% \end{comment}
+
 \begin{figure}[htbp]
     \centering
-    % Minipage di sinistra per la Tabella
-    \begin{minipage}[c]{0.45\textwidth}
-        \centering
-        \begin{tabular}{lr}
-        \toprule
-        Statistica & Valore (s) \\
-        \midrule
-        Media               & 7.45 \\
-        Deviazione standard & 2.51 \\
-        Minimo              & 0.65 \\
-        25° percentile      & 7.64 \\
-        Mediana             & 8.19 \\
-        75° percentile      & 8.59 \\
-        Massimo             & 10.45 \\
-        \bottomrule
-        \end{tabular}
-        \captionof{table}{Statistiche del tempo di generazione per query (GPU T4).}\label{tab:tempo_generazione}
-    \end{minipage}%
-    \hfill% Spazio flessibile tra tabella e grafico
-    % Minipage di destra per il Grafico
-    \begin{minipage}[c]{0.50\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{img/generation_time_hist.png}
-        \caption{Distribuzione dei tempi di generazione su GPU T4.}\label{fig:generation_time_hist}
-    \end{minipage}
+    \begin{tabularx}{0.85\textwidth}{X r}
+    \toprule
+    Statistica & Valore (s) \\
+    \midrule
+    Media               & 7.45 \\
+    Deviazione standard & 2.51 \\
+    Minimo              & 0.65 \\
+    25° percentile      & 7.64 \\
+    Mediana             & 8.19 \\
+    75° percentile      & 8.59 \\
+    Massimo             & 10.45 \\
+    \bottomrule
+    \end{tabularx}
+    \captionof{table}{Statistiche del tempo di generazione per query (GPU T4).}\label{tab:tempo_generazione}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+        ybar interval,
+        width=\textwidth,
+        height=7cm,
+        xlabel={Secondi per query},
+        ylabel={Frequenza},
+        xmin=0, xmax=11,
+        ymin=0,
+        minor y tick num=1,
+        area style,
+        ymajorgrids=true,
+        grid style={dashed, gray!30},
+        xtick={0,1,2,3,4,5,6,7,8,9,10,11},
+        xticklabel style={font=\small},
+    ]
+    \addplot+[
+        hist={bins=22, data min=0, data max=11},
+        fill={rgb,255:red,106;green,90;blue,205},
+        draw={rgb,255:red,80;green,65;blue,180},
+        opacity=0.85,
+    ] table [y=time, col sep=space] {generation_times.csv};
+    % % Linea verticale per la media
+    % \draw[dashed, thick, red!70!black] (axis cs:7.45,0) -- (axis cs:7.45,200)
+    %     node[above, font=\footnotesize] {media $= 7{,}45$\,s};
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Distribuzione dei tempi di generazione su GPU T4.}\label{fig:generation_time_hist}
 \end{figure}
 
 La distribuzione è concentrata tra i 7 e i 9 secondi per la maggioranza delle query, con una coda di valori bassi (minimo 0.65s) verosimilmente legata a generazioni più brevi, come le risposte \textit{Out-of-Domain}, strutturalmente più corte di una query SPARQL completa.
@@ -125,6 +244,12 @@ La distribuzione è concentrata tra i 7 e i 9 secondi per la maggioranza delle q
 \subsection{Tasso di esecuzione corretta}\label{subsec:tasso_esecuzione}
 
 Su tutti i 443 esempi non Out-of-Domain del test set, il \textbf{100\% delle query generate è stato eseguito con successo} contro l'endpoint Blazegraph reale, senza errori di sintassi o di esecuzione (\code{execution\_ok = True} per tutte le righe, nessun \code{exec\_error} registrato). Questo risultato conferma, a livello sintattico, l'efficacia delle 8 regole imposte tramite il system prompt (\cref{subsec:regole}) nel vincolare il modello a generare sempre query ben formate.
+
+\subsubsection{Nessun impatto misurato del bug del namespace EXIF}
+
+Il \cref{chap:implementazione} aveva anticipato che l'impatto del namespace EXIF malformato (\cref{subsec:bug_exif_namespace}) sulle metriche di valutazione sarebbe stato verificato in questo capitolo. Il dato è chiaro: \textbf{nessun impatto negativo è stato osservato}. Su 293 dei 443 esempi non Out-of-Domain (categorie \code{data\_esatta}, \code{data\_intervallo} e \code{dispositivo}), la query di riferimento utilizza effettivamente un predicato \code{exif:} nel corpo del \code{WHERE}, non solo nella dichiarazione dei prefissi; tutti e 293 sono stati eseguiti correttamente, con precision e recall pari a 1.000 (\cref{tab:metriche_categoria}).
+
+Questo esito era atteso, ed è la conferma diretta che la strategia di mitigazione descritta nel \cref{chap:implementazione} funziona come previsto: allineando sia il dataset di training sia il backend allo stesso namespace malformato realmente presente in Blazegraph, il sistema evita di generare query che userebbero il namespace standard corretto (\code{www.w3.org}) e fallirebbero sistematicamente. Il bug, di per sé, avrebbe azzerato precision e recall su quasi i due terzi del test set se non fosse stato gestito; il fatto che qui non produca alcun effetto misurabile è merito della scelta di allineamento e non dell'assenza del problema, che resta presente nei dati di produzione e nella fragilità architetturale discussa nel \cref{chap:conclusioni}.
 
 \subsection{Convergenza del training}\label{subsec:convergenza}
 
@@ -175,7 +300,7 @@ I risultati riportati in \cref{tab:metriche_categoria} meritano una discussione 
 
 Un'ispezione diretta delle 500 coppie (query generata, query di riferimento) in \code{predictions.json} rivela che \textbf{tutte le 500 query generate dal modello sono identiche, carattere per carattere, alla rispettiva query di riferimento}. Questo è un dato di fatto distinto, e più forte, della semplice equivalenza semantica dei risultati: non si tratta di formulazioni sintatticamente diverse che producono lo stesso insieme di risultati, ma di una riproduzione esatta della stringa SPARQL attesa.
 
-Questo fenomeno è spiegabile alla luce di come il test set è stato costruito: le domande e le query di riferimento sono generate dallo stesso sistema di template parametrici (\cref{subsec:dataset_gen}) usato per produrre il dataset di training. Le 8 regole assolute del system prompt (\cref{subsec:regole}) vincolano fortemente la forma sintattica della query attesa: un'unica struttura \code{SELECT DISTINCT {?}image WHERE \{\ldots\}}, predicati fissi per ciascun intento, che riduce lo spazio delle risposte plausibili a un insieme ristretto e, per costruzione, deterministico dato l'intento e i parametri della domanda.
+Questo fenomeno è spiegabile alla luce di come il test set è stato costruito: le domande e le query di riferimento sono generate dallo stesso sistema di template parametrici (\cref{subsec:dataset_gen}) usato per produrre il dataset di training. Le 8 regole assolute del system prompt (\cref{subsec:regole}) vincolano fortemente la forma sintattica della query attesa: un'unica struttura \code{SELECT DISTINCT ?image WHERE \{\ldots\}}, predicati fissi per ciascun intento, che riduce lo spazio delle risposte plausibili a un insieme ristretto e, per costruzione, deterministico dato l'intento e i parametri della domanda.
 
 In altre parole, una corrispondenza esatta al 100\% è coerente con due ipotesi non mutuamente esclusive:
 
@@ -201,10 +326,13 @@ Al di là delle metriche quantitative, l'efficacia del sistema si misura anche r
 \end{itemize}
 \end{sloppypar}
 
-% TODO: se disponibile, aggiungere qui un confronto più diretto e concreto
-% con l'alternativa precedente (es. tempo necessario a formulare
-% manualmente le stesse query SPARQL dei casi d'uso del Cap. 3, o un
-% piccolo test di usabilità con utenti reali del dominio DH.ARC).
+\subsubsection{Limite: nessun confronto diretto con l'alternativa manuale}
+
+I quattro punti sopra restano un confronto qualitativo basato sull'analisi architetturale del sistema, non su una misura empirica diretta. Non è stato condotto né un cronometraggio del tempo necessario a un utente per scrivere manualmente le query SPARQL dei tre casi d'uso del \cref{chap:prototipo}, né un test di usabilità con ricercatori reali del dominio DH.ARC.\@
+
+Un'indicazione indiretta della differenza attesa viene dalla complessità sintattica stessa dei casi d'uso discussi nel \cref{chap:prototipo}: query come quella del caso d'uso 3 (filtro multi-criterio su dispositivo, intervallo di date e formato) richiedono la conoscenza di almeno tre predicati RDF diversi (\code{exif:make}, \code{exif:dateTime}, \code{ebucore:hasMimeType}) e la sintassi corretta per combinarli in un unico \code{WHERE}, competenze che il profilo utente descritto nel \cref{subsec:utenti} tipicamente non possiede. Questo suggerisce che il vantaggio in termini di tempo e di soglia d'accesso sia sostanziale, ma resta appunto un'aspettativa qualitativa e non un dato misurato.
+
+Colmare questa lacuna con un vero studio comparativo (a tempo, o con un gruppo di utenti reali) è indicato come sviluppo futuro nel \cref{chap:conclusioni}.
 
 % =============================================================================
 \section{Discussione dei risultati e limiti della valutazione}\label{sec:discussione}

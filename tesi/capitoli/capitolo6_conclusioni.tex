@@ -4,25 +4,26 @@
 \section{Introduzione al capitolo}\label{sec:intro_cap6}
 % =============================================================================
 
-I capitoli precedenti hanno definito il problema (\cref{chap:contesto}), presentato la soluzione (\cref{chap:prototipo}), descritto la sua realizzazione tecnica (\cref{chap:implementazione}) e misurato il suo comportamento (\cref{chap:valutazione}). Questo capitolo chiude il lavoro con un bilancio onesto: cosa il sistema realizza bene, dove restano margini di miglioramento, e perché rappresenti comunque un passo avanti rispetto alla situazione di partenza descritta nel \cref{chap:contesto} (assenza totale di ricerca per contenuto o concetto sul Datavault). Chiudiamo delineando gli sviluppi futuri, ordinati per priorità: dai bug fix più urgenti fino alle estensioni più ambiziose.
+I capitoli precedenti hanno definito il problema (\cref{chap:contesto}), presentato la soluzione (\cref{chap:prototipo}), descritto la sua realizzazione tecnica (\cref{chap:implementazione}) e misurato il suo comportamento (\cref{chap:valutazione}). Questo capitolo chiude il lavoro con un bilancio onesto: cosa il sistema realizza bene, dove restano margini di miglioramento, e perché rappresenti comunque un passo avanti rispetto alla situazione di partenza descritta nel \cref{chap:contesto}, ovvero l'sassenza totale di ricerca per contenuto o concetto sul Datavault.
+Chiudiamo delineando gli sviluppi futuri, ordinati per priorità: dai bug fix più urgenti fino alle estensioni più ambiziose.
 
 % =============================================================================
-\section{Motivazioni di orgoglio e di modestia}\label{sec:orgoglio_modestia}
+\section{Analisi critica del sistema}\label{sec:orgoglio_modestia}
 % =============================================================================
 
-\subsection{Punti di forza}\label{subsec:punti_forza}
+\subsection{Risultati ottenuti e punti di forza}\label{subsec:punti_forza}
 
-\subsubsection{Affidabilità sintattica quasi totale}
+\subsubsection{Affidabilità sintattica}
 
-Il risultato più solido del sistema è il tasso di esecuzione corretta del 100\% osservato sul test set held-out (\cref{subsec:tasso_esecuzione}): ogni query generata nel campione di valutazione è risultata eseguibile senza errori contro Blazegraph. Questo non è un dato scontato per un sistema basato su generazione di linguaggio: dimostra che il vincolo imposto dalle 8 regole assolute del system prompt (\cref{subsec:regole}), combinato con il fine-tuning su un dataset coerente con quelle stesse regole, produce un comportamento affidabile e ripetibile piuttosto che generazioni occasionalmente malformate.
+Il risultato più solido del sistema è il tasso di esecuzione corretta del 100\% osservato sul test set held-out (\cref{subsec:tasso_esecuzione}): ogni query generata nel campione di valutazione è risultata eseguibile senza errori contro Blazegraph. Questo non è un dato scontato per un sistema basato su generazione di linguaggio: dimostra che il vincolo imposto dalle 8 regole assolute del system prompt (\cref{subsec:regole}), combinato con il fine-tuning su un dataset coerente con quelle stesse regole, produce un comportamento affidabile e ripetibile.
 
 \subsubsection{Uno split di valutazione genuinamente held-out}
 
 A differenza di molte valutazioni superficiali di sistemi basati su LLM, in questo lavoro è stato verificato esplicitamente, risalendo al codice di generazione delle predizioni (\cref{subsec:nota_critica}), che il test set non si sovrappone al training set. I 500 esempi valutati non sono mai stati osservati dal modello durante l'addestramento. Questo rigore metodologico, per quanto abbia comunque richiesto una discussione critica sulla natura in-distribuzione del test (\cref{subsec:nota_critica}), è di per sé un punto di forza: molti sistemi analoghi non documentano affatto come è stato costruito il proprio set di valutazione.
 
-\subsubsection{Gestione esplicita e documentata di un bug di produzione}
+% \subsubsection{Gestione esplicita e documentata di un bug di produzione}
 
-Il caso del namespace EXIF malformato meriterebbe di essere fonte di imbarazzo, ma è stato invece trattato come un'opportunità: la scelta di allineare sistematicamente dataset e backend al dato reale, anziché tentare una correzione che avrebbe reso il sistema inutilizzabile in produzione, dimostra una comprensione del principio secondo cui un sistema deve funzionare sui dati che ha, non su quelli che dovrebbe avere. La documentazione esplicita di questa scelta, con la sua motivazione e i suoi limiti, è preferibile a un workaround silenzioso e non spiegato.
+% Il caso del namespace \code{EXIF} malformato è stato trattato come un'opportunità: sono stati allineati sistematicamente dataset e backend al dato reale piuttosto che tentare una correzione che non avrebbe migliorato il sistema, questo seguendo il principio per cui un sistema deve funzionare sui dati che ha, non su quelli che dovrebbe avere. La documentazione esplicita di questa scelta, con la sua motivazione e i suoi limiti, è preferibile a un workaround silenzioso e non spiegato.
 
 \subsubsection{Economicità delle risorse impiegate}
 
@@ -32,9 +33,9 @@ L'intera pipeline di addestramento (generazione del dataset sintetico, fine-tuni
 
 Il system prompt è identico, byte per byte, sia nel generatore del dataset sia nel backend di inferenza (\cref{subsec:regole}). Questa scelta, apparentemente minore, elimina una classe di errori comune nei sistemi basati su fine-tuning: il disallineamento tra le condizioni di addestramento e quelle di utilizzo reale (\textit{train-serve skew}).
 
-\subsection{Punti di modestia}\label{subsec:punti_modestia}
+\subsection{Limiti del sistema e criticità}\label{subsec:punti_modestia}
 
-\subsubsection{Una valutazione ancora distante dall'uso reale}
+\subsubsection{Limiti della valutazione rispetto agli scenari d'uso reale}
 
 Il limite più rilevante, discusso ampiamente nel \cref{subsec:nota_critica}, è che la valutazione quantitativa misura la capacità del modello di rispettare un formato di query generato dagli stessi template usati in training, non la sua capacità di gestire domande realmente libere, poste da un umanista che non conosce né le regole del sistema né le 13 categorie di query supportate (\cref{subsec:dataset_gen}). Nessun utente reale del dominio DH.ARC ha ancora interagito con il sistema in condizioni non controllate.
 
@@ -54,11 +55,11 @@ Il backend di produzione esegue l'inferenza su CPU (\cref{subsec:fastapi}), ment
 
 Il limite di 1024 token in \code{max\_seq\_length} (\cref{subsec:hyperparams}), scelto per contenere l'uso di memoria durante il training, potrebbe risultare insufficiente per domande particolarmente articolate o per un futuro ampliamento del system prompt (ad esempio se si aggiungessero più predicati o esempi few-shot nel prompt stesso).
 
-\subsection{Perché vale la pena adottare questa soluzione}\label{subsec:giustificazione}
+\subsection{Impatto e prospettive nel dominio umanistico}\label{subsec:giustificazione}
 
-Rispetto alla situazione precedente, ovvero l'assenza totale di un meccanismo di ricerca per contenuto sul Datavault, con l'unica alternativa realistica rappresentata dalla scrittura manuale di SPARQL da parte di utenti privi delle competenze necessarie (\cref{subsec:tre_barriere}), il sistema sposta il problema da ``impossibile per l'utente target'' a ``possibile, con margini di miglioramento noti e documentati''. Non è una soluzione perfetta, ma è una soluzione \emph{funzionante} su un problema che, prima di questo lavoro, non aveva alcuna soluzione praticabile per un ricercatore umanista senza competenze SPARQL.
+Rispetto alla situazione precedente, ovvero l'assenza di un meccanismo di ricerca per contenuto sul Datavault, con l'unica alternativa realistica rappresentata dalla scrittura manuale di SPARQL da parte di utenti privi delle competenze necessarie (\cref{subsec:tre_barriere}), il sistema sposta il problema da ``impossibile per l'utente target'' a ``possibile, con margini di miglioramento noti e documentati''. Non è una soluzione perfetta, ma è una soluzione \emph{funzionante} su un problema che, prima di questo lavoro, non aveva alcuna soluzione praticabile per un ricercatore umanista senza competenze SPARQL.\@
 
-Il punto qualificante non è l'assenza di errori nella valutazione fin qui condotta (come discusso in \cref{subsec:nota_critica}, quella valutazione ha una portata limitata), ma la trasparenza con cui i limiti sono stati identificati e documentati. Un sistema che dichiara i propri confini con questo livello di dettaglio è più utile, e più onesto, di uno che sbandiera performance non qualificate metodologicamente.
+% Il punto qualificante non è l'assenza di errori nella valutazione fin qui condotta (come discusso in \cref{subsec:nota_critica}, quella valutazione ha una portata limitata), ma la trasparenza con cui i limiti sono stati identificati e documentati. Un sistema che dichiara i propri confini con questo livello di dettaglio è più utile, e più onesto, di uno che sbandiera performance non qualificate metodologicamente.
 
 % =============================================================================
 \section{Sviluppi futuri}\label{sec:sviluppi_futuri}
@@ -85,12 +86,12 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
 \subsection{Estensioni fondamentali}\label{subsec:estensioni_fondamentali}
 
 \begin{enumerate}
-    \item \textbf{Ampliare la copertura semantica dello schema}: le 13 categorie attuali (\cref{subsec:dataset_gen}) coprono i pattern di ricerca più comuni, ma lo schema RDF del Datavault contiene predicati non ancora sfruttati (ad esempio quelli PREMIS relativi alla dimensione dei file, o le relazioni RDFS di sottoclasse osservate nello schema). Un'estensione del dataset generativo potrebbe abilitare interrogazioni oggi non supportate.
+    \item \textbf{Ampliare la copertura semantica dello schema}: le 13 categorie attuali (\cref{subsec:dataset_gen}) coprono i pattern di ricerca più comuni rispetto all'attuale popolazione del Datavault, ma lo schema RDF contiene predicati non ancora sfruttati (ad esempio quelli PREMIS relativi alla dimensione dei file, o le relazioni RDFS di sottoclasse osservate nello schema). Un'estensione del dataset generativo potrebbe abilitare interrogazioni oggi non supportate.
     \item \textbf{Passare da un prompt statico a un vero meccanismo RAG dinamico}: il sistema attuale inietta lo schema RDF nel system prompt in forma fissa (\cref{subsec:regole}). Un'evoluzione naturale, discussa a livello teorico nel \cref{sec:rag}, è recuperare dinamicamente solo i frammenti di schema rilevanti per ciascuna domanda, permettendo al sistema di scalare a schemi più ampi o mutevoli senza dover ri-addestrare il modello a ogni modifica dell'ontologia.
     \item \textbf{Inferenza su GPU in produzione}: sostituire l'attuale deployment su CPU (\cref{subsec:fastapi}) con un'infrastruttura GPU dedicata, per ridurre i tempi di risposta percepiti dall'utente finale a un livello compatibile con un'interazione conversazionale fluida.
 \end{enumerate}
 
-\subsection{Desideri e sogni}\label{subsec:desideri_sogni}
+\subsection{Possibili sviluppi futuri}\label{subsec:sviluppi_futuri}
 
 \begin{enumerate}
     \item \textbf{Ricerca per contenuto visivo, non solo per metadati}: l'intero sistema attuale opera sui metadati EXIF, Dublin Core ed EBUCore associati alle immagini, non sul loro contenuto visivo. Un'estensione di grande ambizione sarebbe l'integrazione di modelli di visione (ad esempio embedding CLIP-like) che permettano domande come ``mostrami le immagini che raffigurano una miniatura con un drago'', andando oltre la ricerca per attributi tecnici o descrittivi verso una vera ricerca per concetto visivo, in piena coerenza con la visione di ``findability'' discussa nel \cref{chap:contesto}.
@@ -102,8 +103,8 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
 \section{Conclusioni finali}\label{sec:conclusioni_finali}
 % =============================================================================
 
-Questo lavoro nasce da un'osservazione semplice: il Datavault di DH.ARC contiene diciannove milioni di triple RDF, ma nessun modo per un ricercatore umanista di interrogarle se non conoscendo SPARQL. Abbiamo affrontato questo problema costruendo un LLM Query Builder che traduce domande in linguaggio naturale italiano in query SPARQL valide, attraverso il fine-tuning di un modello di dimensioni contenute su un dataset sintetico costruito appositamente per il dominio.
+Questo lavoro nasce da un'osservazione semplice: il Datavault di DH.ARC contiene milioni di triple RDF, ma nessun modo agile per ricercatori umanisti di interrogarle se non conoscendo SPARQL.\@ Abbiamo affrontato questo problema costruendo un LLM Query Builder che traduce domande in linguaggio naturale italiano in query SPARQL valide, attraverso il fine-tuning di un modello di dimensioni contenute su un dataset sintetico costruito appositamente per il dominio.
 
-I risultati raccolti nel \cref{chap:valutazione} mostrano un sistema sintatticamente affidabile, efficiente nei tempi di generazione e coerente nella sua architettura tra fase di training e fase di inferenza. Allo stesso tempo, la discussione onesta dei suoi limiti (una valutazione ancora in-distribuzione, l'assenza di un test con utenti reali, la fragilità nota rispetto ai dati di produzione) delimita correttamente la portata di quanto qui dimostrato, senza sminuire il fatto che, per la prima volta, il Datavault dispone di un meccanismo di ricerca per contenuto praticabile da chi non conosce SPARQL.
+I risultati raccolti nel \cref{chap:valutazione} mostrano un sistema sintatticamente affidabile, efficiente nei tempi di generazione e coerente nella sua architettura tra fase di training e fase di inferenza. Allo stesso tempo, la discussione onesta dei suoi limiti (una valutazione ancora in-distribuzione, l'assenza di un test con utenti reali, la fragilità nota rispetto ai dati di produzione) delimita la portata di quanto qui dimostrato, senza sminuire il fatto che Datavault dispone di un meccanismo di ricerca per contenuto praticabile da chi non conosce SPARQL.\@
 
-Gli sviluppi futuri delineati in questo capitolo, dalla verifica delle categorie non ancora testate fino alla visione più ambiziosa di una ricerca per contenuto visivo, tracciano un percorso che va ben oltre l'ambito di una tesi triennale, ma che questo lavoro pone le basi concrete per intraprendere.
+Gli sviluppi futuri delineati in questo capitolo, dalla verifica delle categorie non ancora testate fino alla visione più ambiziosa di una ricerca per contenuto visivo, tracciano un percorso che potrebbe portare ad un significativo miglioramento in termini di efficacia e usabilità del sistema.

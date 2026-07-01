@@ -8,7 +8,7 @@
 % 'book' con 12pt, A4, stampa fronte-retro.
 % Cambia in 'report' solo se il relatore lo richiede esplicitamente.
 % -----------------------------------------------------------------------------
-\documentclass[12pt,a4paper,twoside]{book}
+\documentclass[12pt,a4paper,oneside]{book}
 
 
 % PACCHETTI FONDAMENTALI
@@ -47,6 +47,8 @@
 \usepackage{placeins}
 \usepackage{lscape}
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning}
 
 \usepackage{pdfpages}
@@ -120,12 +122,30 @@
     morecomment=[l]{//},
     morecomment=[s]{/*}{*/},
     morestring=[b]',
-    morestring=[b]'',
-    morestring=[b]``
+    morestring=[b]", % chktex 18
+    morestring=[b]`
+}
+\lstdefinelanguage{Sparql}{
+    keywords={SELECT, WHERE, FILTER, OPTIONAL, UNION, PREFIX, BASE},
+    morecomment=[l]{\#},
+    morestring=[b]',
+    morestring=[b]", % chktex 18
+    morestring=[b]`
+}
+\lstdefinelanguage{Python}{
+    keywords={import, as, def, class, return, if, else, for, in, while, try, except, finally, with, from, yield, pass, break, continue, global, nonlocal},
+    morecomment=[l]{\#},
+    morestring=[b]',
+    morestring=[b]", % chktex 18
+}
+\lstdefinelanguage{txt}{
+    keywords={},
 }
 
 
+
 % --- Utility varie ---
+\usepackage{etoolbox}
 \usepackage[most]{tcolorbox} 
 \usepackage{xcolor}
 \definecolor{mygray}{RGB}{200,200,200}

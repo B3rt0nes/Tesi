@@ -13,7 +13,7 @@
         Il centro ha lo scopo di fungere da hub per gli studiosi e le istituzioni, supportandoli ``nella progettazione, sviluppo e manutenzione di progetti di ricerca DH'' e promuovendo iniziative innovative nel campo umanistico.
 
         All'interno di questo ecosistema, una delle infrastrutture tecnologiche di conservazione è il \textit{Datavault}, un repository digitale basato sull'architettura Fedora.
-        Questo sistema svolge un ruolo cruciale nel ciclo di vita degli asset digitali culturali, poiché è stato appositamente progettato per supportare l'archiviazione a lungo termine, la conservazione e la gestione strutturata delle risorse digitalizzate. 
+        Il Datavault è un repository digitale basato sull'architettura Fedora, progettato per supportare l'archiviazione a lungo termine, la conservazione e la gestione strutturata delle risorse digitalizzate. 
         Dal punto di vista tecnico, il repository espone le proprie risorse sotto forma di triple RDF per favorire l'interoperabilità semantica e l'integrazione con strumenti di analisi avanzata.\cite{Far25}
         Tuttavia, il Datavault ospita attualmente grande mole di dati, dell'ordine di milioni di triple RDF fortemente interconnesse e strutturalmente molto simili tra loro.
         Questa vastità e omogeneità sintattica rende la ricerca, l'estrazione e il recupero di specifiche risorse un'operazione complessa e non immediata, ponendo sfide significative per l'esplorazione del contenuto.
@@ -22,7 +22,7 @@
 
         \subsubsection{Profilo disciplinare e competenze tecniche}
             Gli utenti di riferimento del centro DH.ARC sono docenti, ricercatori, assegnisti e studenti di discipline prettamente umanistiche, quali filologia, storia, storia dell'arte e archeologia.\cite{Per22}
-            Questi profili hanno profonde competenze nel dominio delle fonti culturali e nell'analisi dei testi critici, ma tendono ad essere privi di un background tecnico\slash\@informatico. 
+            Questi profili hanno forti competenze nel dominio delle fonti culturali e nell'analisi dei testi critici, ma tendono ad essere privi di un background tecnico\slash\@informatico. 
 
             La loro alfabetizzazione digitale nel campo dell'Information Retrieval si limita generalmente all'impiego di strumenti ``pronti all'uso'': cataloghi OPAC, database relazionali con maschere pre-configurate o motori di ricerca generici; raramente hanno familiarità con triplestore RDF, SPARQL, o Knowledge Graphs.
 
@@ -102,7 +102,7 @@
 \section{Casi d'uso principali ed esempi}\label{sec:casiduso}
 
     Descriviamo tre scenari d'uso concreti che dimostrano l'efficacia del sistema presso DH.ARC, evidenziando il parallelismo tra l'interazione logica (traduzione LLM e sanitizzazione) e il riscontro visivo restituito all'utente.\@
-
+\newpage
     \subsection{Caso d'uso 1: ricerca per caratteristiche di acquisizione e gestione anomalie}\label{subsec:cu1}
         \textbf{Attore}: un ricercatore che vuole individuare immagini acquisite con specifiche caratteristiche tecniche.\\
         \textbf{Input testuale}: 
@@ -110,29 +110,26 @@
             \code{``Filtra i risultati mostrandomi le risorse}
             \code{acquisite con il dispositivo NextScan''}
         \end{center}
+        \vspace{0.5em}
+
+        \begin{lstlisting}[language=sparql, caption=Caso d'uso 1: Query SPARQL generata e sanitizzata, basicstyle=\ttfamily\scriptsize, breaklines=true]
+  PREFIX exif: <http://wwww3org/2003/12/exif/ns#>
+  PREFIX fedora: <http://fedora.info/definitions/v4/repository#>
+  PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>
+  PREFIX ldp: <http://www.w3.org/ns/ldp#>
+  PREFIX dc: <http://purl.org/dc/elements/1.1/>
+  SELECT DISTINCT ?image WHERE {
+      ?image exif:make ?make .
+      FILTER(CONTAINS(LCASE(?make), "nextscan"))
+  }
+  LIMIT 20\end{lstlisting}
 
         \begin{figure}[H]
             \centering
-            \begin{minipage}[c]{0.48\textwidth}
-        \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true]
-PREFIX exif: <http://wwww3org/2003/12/exif/ns#>
-PREFIX fedora: <http://fedora.info/definitions/v4/repository#>
-PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>
-PREFIX ldp: <http://www.w3.org/ns/ldp#>
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
-
-SELECT DISTINCT ?image WHERE {
-?image exif:make ?make .
-FILTER(CONTAINS(LCASE(?make), "nextscan"))
-}
-LIMIT 20
-        \end{lstlisting}
-            \end{minipage}\hfill
-            \begin{minipage}[c]{0.48\textwidth}
-                \includegraphics[width=\textwidth]{img/caso_uso_1.png} 
-            \end{minipage}
-            \caption{Caso d'uso 1: A sinistra la query SPARQL generata e sanitizzata, a destra l'estrazione delle risorse corrispondenti al dispositivo.}\label{fig:caso_uso1}
+            \includegraphics[width=0.9\textwidth]{img/caso_uso_1.png}
+            \caption{Caso d'uso 1: Estrazione delle risorse corrispondenti al dispositivo NextScan.}\label{fig:caso_uso1}
         \end{figure}
+        \vfill
 
         \textbf{Risoluzione del problema}: Oltre a delegare all'LLM l'onere della traduzione del linguaggio naturale nel predicato corretto (\code{exif:make}), questo scenario dimostra la resilienza dell'architettura. 
 
@@ -143,65 +140,64 @@ LIMIT 20
             \code{``Filtra le risorse mostrandomi i file in cui}
             \code{l'autore dello scatto è University''}
         \end{center}
+        \vspace{0.5em}
+
+        \begin{lstlisting}[language=sparql, caption=Caso d'uso 2: Query SPARQL per disambiguazione autore, basicstyle=\ttfamily\scriptsize, breaklines=true]
+  PREFIX exif: <http://wwww3org/2003/12/exif/ns#>
+  PREFIX fedora: <http://fedora.info/definitions/v4/repository#>
+  PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>
+  PREFIX ldp: <http://www.w3.org/ns/ldp#>
+  PREFIX dc: <http://purl.org/dc/elements/1.1/>
+  SELECT DISTINCT ?image WHERE {
+      ?image exif:artist ?artist .
+      FILTER(CONTAINS(LCASE(?artist), "university"))
+  }
+  LIMIT 20\end{lstlisting}
 
         \begin{figure}[H]
             \centering
-            \begin{minipage}[c]{0.48\textwidth}
-        \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true]
-PREFIX exif: <http://wwww3org/2003/12/exif/ns#>
-# [...]
-
-SELECT DISTINCT ?image WHERE {
-?image exif:artist ?artist .
-FILTER(CONTAINS(LCASE(?artist), "university"))
-}
-LIMIT 20
-        \end{lstlisting}
-            \end{minipage}\hfill
-            \begin{minipage}[c]{0.48\textwidth}
-                % INSERISCI QUI LO SCREENSHOT DEL RISULTATO DI QUESTA QUERY
-                \includegraphics[width=\textwidth]{img/caso_uso_2.png} 
-            \end{minipage}
+            % INSERISCI QUI LO SCREENSHOT DEL RISULTATO DI QUESTA QUERY
+            \includegraphics[width=0.9\textwidth]{img/caso_uso_2.png} 
             \caption{Caso d'uso 2: Disambiguazione semantica dell'autore e visualizzazione dei risultati.}\label{fig:caso_uso2}
         \end{figure}
 
         \textbf{Risoluzione del problema}: Questo scenario evidenzia la capacità dell'LLM di operare una corretta disambiguazione semantica. Il modello comprende l'intento dell'utente distinguendo l'autore materiale dello scatto (\code{exif:artist}) dall'utente responsabile del caricamento nel Data Vault (\code{fedora:createdBy}).
 
-    \subsection{Caso d'uso 3: ricerca multi-criterio con filtro temporale}\label{subsec:cu3}
+    \newpage
+        \subsection{Caso d'uso 3: ricerca multi-criterio con filtro temporale}\label{subsec:cu3}
         \textbf{Attore}: un ricercatore che vuole analizzare la produzione digitale filtrandola all'interno di un preciso arco temporale.\\
         \textbf{Input testuale}: 
         \begin{center}
             \code{``Mostrami tutte le risorse comprese tra l'anno 2023 e il 2026''}
         \end{center}
+        \vspace{0.5em}
+
+        \begin{lstlisting}[language=sparql, caption=Caso d'uso 3: Query SPARQL per ricerca con filtro temporale, basicstyle=\ttfamily\scriptsize, breaklines=true]
+  PREFIX exif: <http://wwww3org/2003/12/exif/ns#>
+  PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>   
+  PREFIX fedora: <http://fedora.info/definitions/v4/repository#>
+  PREFIX ldp: <http://www.w3.org/ns/ldp#>
+  PREFIX dc: <http://purl.org/dc/elements/1.1/>
+  SELECT DISTINCT ?image WHERE {
+      ?image exif:dateTime ?date .
+      FILTER(STR(?date) >= "2023" && STR(?date) <= "2026")
+  }
+  LIMIT 20\end{lstlisting}
 
         \begin{figure}[H]
             \centering
-            \begin{minipage}[c]{0.48\textwidth}
-        \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true]
-PREFIX exif: <http://wwww3org/2003/12/exif/ns#>
-# [...]
-
-SELECT DISTINCT ?image WHERE {
-?image exif:dateTime ?date .
-FILTER(STR(?date) >= "2023" && STR(?date) <= "2026")
-}
-LIMIT 20
-        \end{lstlisting}
-            \end{minipage}\hfill
-            \begin{minipage}[c]{0.48\textwidth}
-                % INSERISCI QUI LO SCREENSHOT DEL RISULTATO DI QUESTA QUERY
-                \includegraphics[width=\textwidth]{img/caso_uso_3.png} 
-            \end{minipage}
+            % INSERISCI QUI LO SCREENSHOT DEL RISULTATO DI QUESTA QUERY
+            \includegraphics[width=0.9\textwidth]{img/caso_uso_3.png} 
             \caption{Caso d'uso 3: Applicazione logica del range temporale ed estrazione delle immagini.}\label{fig:caso_uso3}
         \end{figure}
 
         \textbf{Risoluzione del problema}: L'estrazione basata su range temporali richiede una sintassi SPARQL rigorosa e insidiosa per un utente non tecnico. Il sistema individua automaticamente il predicato \code{exif:dateTime} e costruisce i costrutti logici di comparazione testuale (\code{>=} e \code{<=}).
-
-\section{Conclusioni del capitolo}\label{sec:conclusioni_cap3}
-    In questo capitolo abbiamo presentato il prototipo e la sua interfaccia, rispondendo attivamente alle criticità sollevate nel \cref{chap:contesto}:
-    \begin{enumerate}
-        \item Il problema della \textbf{``scatola vuota''} e la paralisi decisionale (Legge di Hick) sono stati superati adottando un'interfaccia basata unicamente sull'input testuale naturale.
-        \item L'obbligo di conoscere schemi complessi (es.\ prefissi EXIF o Dublin Core) è stato demandato al backend, azzerando il carico cognitivo per l'utente finale.
+    \newpage
+    \section{Conclusioni del capitolo}\label{sec:conclusioni_cap3}
+        In questo capitolo abbiamo presentato il prototipo e la sua interfaccia, rispondendo attivamente alle criticità sollevate nel \cref{chap:contesto}:
+        \begin{enumerate}
+            \item Il problema della \textbf{``scatola vuota''} e la paralisi decisionale (Legge di Hick) sono stati superati adottando un'interfaccia basata unicamente sull'input testuale naturale.
+            \item L'obbligo di conoscere schemi complessi (es.\ prefissi EXIF o Dublin Core) è stato demandato al backend, azzerando il carico cognitivo per l'utente finale.
         \item La rigidità formale di SPARQL è stata assorbita dall'LLM, che agisce come mediatore invisibile.
     \end{enumerate}
 

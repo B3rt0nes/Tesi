@@ -184,49 +184,45 @@ La versione finale del generatore comprende 13 funzioni template, ciascuna corri
 \end{table}
 Si noti come le categorie 1 e 13 condividano lo stesso intento superficiale (``ricerca per autore'') ma si distinguano per il predicato RDF target (\code{exif:artist} per l'autore dello scatto, \code{fedora:createdBy} per chi ha effettuato il caricamento): questa distinzione, esplicitata anche nella Regola 2 del system prompt (\cref{subsec:regole}), rappresenta uno degli edge case linguistici più rilevanti affrontati nella progettazione del dataset.
 
-\begin{comment}
+% \begin{comment}
 \subsubsection{Edge case e bug risolti durante la generazione}\label{subsec:edge_cases_generazione}
 
 Durante la fase di validazione, l'analisi delle query fallite aveva evidenziato un tasso di errore significativo dovuto a una scorretta generazione della sintassi SPARQL, in particolare a causa di un'errata gestione dei prefissi dei metadati. Per risolvere la problematica in modo strutturale, si è proceduto a raffinare gli esempi all'interno del dataset di addestramento, correggendo esplicitamente il modo in cui il modello mappa e dichiara i prefissi ontologici, e gestendo puntualmente i \textit{type-mismatch} tra proprietà testuali e numeriche. Nello specifico, gli edge case principali risolti sono stati:
 
 \begin{itemize}
-  \item \textbf{Type mismatch su date}: il formato del filtro temporale era inizialmente incoerente con \code{xsd:dateTime} --- risolto normalizzando il formato nei template e, come descritto nella Regola 6 del system prompt, imponendo il confronto tramite \code{STR()} anziché tramite tipi di dato tipizzati.
+  \item \textbf{Type mismatch su date}: il formato del filtro temporale era inizialmente incoerente con \code{xsd:dateTime} --- risolto normalizzando il formato nei template e, come descritto nella Regola 6 del system prompt, imponendo il confronto tramite \code{STR ()} anziché tramite tipi di dato tipizzati.
   \item \textbf{Case-sensitivity nei filtri di negazione} --- risolto normalizzando i predicati nel template generatore.
   \item \textbf{Generazione di date calendarialmente non valide} (es.\ 30 febbraio) --- risolto validando le date generate con la libreria Python \code{datetime}.
-  \item \textbf{Ambiguità del separatore nelle date EXIF} (\code{':'} vs \code{'-'}) --- risolto unificando il formato nel dataset.
+  \item \textbf{Ambiguità del separatore nelle date EXIF} (\code{:} vs \code{-}) --- risolto unificando il formato nel dataset.
 \end{itemize}
 
 \subsubsection{Schema RDF reale e un bug di produzione nel namespace EXIF}\label{subsec:bug_exif_namespace}
 
-%
-% TODO: tabella dei predicati reali con frequenza (dati dalla query di
-% frequenza metadati lanciata su Blazegraph)
-%
-% \begin{table}[h]
-% \centering
-% \begin{tabular}{lll}
-% \toprule
-% Predicato & Frequenza & Significato \\
-% \midrule
-% rdf:type & 2.707.278 & Tipizzazione della risorsa \\
-% ldp:contains & 676.186 & Relazione di contenimento container -> risorsa \\
-% ebucore:filename & 674.985 & Nome del file \\
-% ebucore:hasMimeType & 674.985 & Tipo MIME della risorsa \\
-% premis:hasSize & 674.985 & Dimensione del file \\
-% exif:dateTime & 674.959 & Data/ora di acquisizione \\
-% exif:make / exif:model & 674.959 & Dispositivo di acquisizione \\
-% exif:imageWidth / imageLength & 672.607 & Dimensioni in pixel \\
-% dc:title & 1.196 & Titolo (solo sui container) \\
-% \bottomrule
-% \end{tabular}
-% \caption{Predicati principali dello schema RDF del Datavault, con frequenza osservata}
-% \label{tab:schema_predicati}
-% \end{table}
-%
 
-Durante l'analisi della distribuzione dei predicati nel triplestore di produzione è emerso che il namespace EXIF effettivamente presente in Blazegraph è malformato: \code{http://wwww3org/2003/12/exif/ns\#}, anziché lo standard \code{http://www.w3.org/2003/12/exif/ns\#} (mancano i due punti e il prefisso \code{www.} corretto). Il bug è stato confermato eseguendo una query SPARQL di verifica diretta sull'endpoint:
+\begin{table}[h]
+  \centering
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{@{} p{5cm} r >{\raggedright\arraybackslash}X @{}}
+    \toprule
+    Predicato & Frequenza & Significato \\
+    \midrule
+    \code{rdf:type}                      & 2.707.278 & Tipizzazione della risorsa \\
+    \code{ldp:contains}                  & 676.186   & Rel.\ di contenimento container $\to$ risorsa \\
+    \code{ebucore:filename}              & 674.985   & Nome del file \\
+    \code{ebucore:hasMimeType}           & 674.985   & Tipo MIME della risorsa \\
+    \code{premis:hasSize}                & 674.985   & Dimensione del file \\
+    \code{exif:dateTime}                 & 674.959   & Data/ora di acquisizione \\
+    \code{exif:make / exif:model}        & 674.959   & Dispositivo di acquisizione \\
+    \code{exif:imageWidth}               & 672.607   & Dimensioni in pixel \\
+    \code{dc:title}                      & 1.196     & Titolo (solo sui container) \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Predicati principali dello schema RDF del Datavault, con frequenza osservata}\label{tab:schema_predicati}
+\end{table}
 
-\begin{lstlisting}[language=bash, caption=Query di verifica del namespace EXIF reale]
+Durante l'analisi della distribuzione dei predicati nel triplestore di produzione è emerso che il namespace EXIF effettivamente presente in Blazegraph è malformato: \url{http://wwww3org/2003/12/exif/ns#}, anziché lo standard \url{http://www.w3.org/2003/12/exif/ns#} (mancano i due punti e il prefisso \code{www.} corretto). Il bug è stato confermato eseguendo una query SPARQL di verifica diretta sull'endpoint:
+
+\begin{lstlisting}[language=sparql, caption=Query di verifica del namespace EXIF reale]
 SELECT DISTINCT ?p WHERE {
   ?s ?p ?o .
   FILTER(CONTAINS(STR(?p), "exif"))
@@ -252,7 +248,7 @@ PREFISSI = (
 
 \paragraph{Considerazioni.} Questa soluzione, per quanto pragmatica, espone una fragilità intrinseca dell'approccio: il sistema è ora \textit{accoppiato} a un errore presente nei dati di produzione. Se in futuro il Datavault venisse corretto o migrato verso un namespace EXIF standard, sia il dataset di training sia il backend richiederebbero un aggiornamento sincronizzato per evitare di reintrodurre lo stesso problema in forma invertita. Questo aspetto viene ripreso come punto di attenzione nel \cref{chap:conclusioni} (sviluppi futuri) e il suo impatto sulle metriche di valutazione è discusso nel \cref{chap:valutazione}.
 
-\end{comment}
+% \end{comment}
 
 \newpage
 
@@ -268,7 +264,7 @@ PREFISSI = (
 \begin{table}[htbp]
   \centering
   \renewcommand{\arraystretch}{1.2}
-  \begin{tabularx}{\textwidth}{@{} p{6.5cm} >{\raggedright\arraybackslash}X @{}}
+  \begin{tabularx}{\textwidth}{@{} p{6.5cm} >{\raggedright\arraybackslash}X @{}} % 
   \toprule
   \textbf{Parametro} & \textbf{Valore} \\
   \midrule
@@ -562,7 +558,7 @@ Il formato dati alla base del fine-tuning struttura la conoscenza del dominio in
 Per istruire l'LLM sono state definite 8 regole di generazione SPARQL, sotto forma di system prompt. 
 Una caratteristica progettuale importante, nonché garanzia di coerenza tra training e inferenza, è che questo system prompt è identico sia in \code{genera\_dataset.py} (training) sia in \code{main.py} (inferenza), eliminando una possibile fonte di \textit{distribution shift} tra le condizioni di addestramento e quelle di utilizzo reale del modello:
 
-\begin{lstlisting}[language=bash, caption=System prompt utilizzato in training e inference (identico in entrambi i file)]
+\begin{lstlisting}[language=txt, caption=System prompt utilizzato in training e inference (identico in entrambi i file)]
 Sei un traduttore da linguaggio naturale a SPARQL per un Data Vault Fedora. REGOLE ASSOLUTE:
 1. Restituisci SEMPRE e SOLO: SELECT DISTINCT ?image WHERE { ... }. Nessun altra variabile nella SELECT.
 2. Autore scatto: usa exif:artist. Autore caricamento: usa fedora:createdBy.
