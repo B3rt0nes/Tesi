@@ -1,3 +1,5 @@
+\chapter{Valutazione}\label{chap:valutazione}
+
 \section{Introduzione al capitolo}\label{sec:intro_cap5}
 
 Nel \cref{chap:implementazione} abbiamo descritto come il sistema sia stato costruito; andremo adesso a valutarne il comportamento. Distinguiamo due piani di analisi: l'\textbf{efficienza} (\cref{sec:efficienza}), ovvero le prestazioni quantitative misurabili (tempo di generazione, tasso di esecuzione corretta, convergenza del training) e l'\textbf{efficacia} (\cref{sec:efficacia}), ovvero il miglioramento qualitativo apportato dal sistema rispetto alle soluzioni precedenti (funzionalità, usabilità e flessibilità).
@@ -23,7 +25,7 @@ Abbiamo dovuto dividere la pipeline in due fasi perché la fase di generazione r
 
 Una scelta metodologica rilevante riguarda il trattamento delle clausole \code{ORDER BY} e \code{LIMIT}. SPARQL non garantisce un ordine deterministico dei risultati quando è presente un \code{LIMIT} senza un corrispondente \code{ORDER BY}: eseguire due volte la stessa query può restituire campioni diversi delle righe disponibili, producendo falsi negativi anche quando la query generata è testualmente identica a quella di riferimento.
 
-Per questo motivo, precision e recall vengono calcolate sull'insieme \emph{completo} dei risultati, dopo aver rimosso \code{ORDER BY} e \code{LIMIT} da entrambe le query prima dell'esecuzione. L'obiettivo è isolare la correttezza della \emph{logica di filtro} (la clausola \code{WHERE}) --- cioè se il modello ha capito \emph{quali} elementi cercare --- da un controllo distinto e separato sulla clausola \code{LIMIT}, registrato nella colonna \code{limit\_match} del dataset di valutazione, che verifica se il modello ha capito anche \emph{quanti} elementi erano richiesti.
+Per questo motivo, precision e recall vengono calcolate sull'insieme \emph{completo} dei risultati, dopo aver rimosso \code{ORDER BY} e \code{LIMIT} da entrambe le query prima dell'esecuzione. L'obiettivo è isolare la correttezza della \emph{logica di filtro} (la clausola \code{WHERE}), cioè se il modello ha capito \emph{quali} elementi cercare, da un controllo distinto sulla clausola \code{LIMIT}: registrato nella colonna \code{limit\_match} del dataset di valutazione, verifica se il modello ha capito anche \emph{quanti} elementi erano richiesti.
 
 % =============================================================================
 \section{Efficienza: valutazione quantitativa}\label{sec:efficienza}
@@ -31,7 +33,7 @@ Per questo motivo, precision e recall vengono calcolate sull'insieme \emph{compl
 
 \subsection{Struttura dei test}\label{subsec:struttura_test}
 
-Per ragioni di disponibilità hardware e per isolare i tempi di inferenza, i parametri di esecuzione del test sono stati strutturati come segue:
+I parametri di esecuzione del test sono i seguenti:
 
 % \vspace{-0.2cm} % Riduce leggermente lo spazio prima della lista
 \begin{itemize}
@@ -41,11 +43,13 @@ Per ragioni di disponibilità hardware e per isolare i tempi di inferenza, i par
     \item \textbf{Dati (Test Set)}: 500 esempi. Costituisce una reale partizione \textit{held-out} (estratta al 5\% con seed deterministico \code{3407}), priva di sovrapposizioni col training.
 \end{itemize}
 
+\newpage
+
 \subsection{Distribuzione del test set per categoria}\label{subsec:distribuzione_test}
 
 Il test set estratto copre 7 delle 14 categorie di query definite nel generatore (\cref{subsec:dataset_gen}). Come visibile in \cref{tab:distribuzione_test} e \cref{fig:category_distribution}, la distribuzione non è uniforme: la categoria \code{data\_esatta} da sola costituisce quasi la metà del campione (233/500, 46.6\%), mentre alcune categorie di nicchia (es.\@ \code{query\_not\_anno}) non risultano rappresentate. 
 
-Questo sbilanciamento va tenuto presente nell'interpretazione dei risultati: le metriche aggregate risultano molto più informative se lette trasversalmente per categoria (\cref{subsec:metriche_categoria}) piuttosto che come media generale schiacciata dalla classe maggioritaria.
+Questo sbilanciamento va tenuto presente nell'interpretazione dei risultati: le metriche aggregate sono più informative se lette per categoria (\cref{subsec:metriche_categoria}) che come media generale.
 
 % --- TABELLA E GRAFICO AFFIANCATI PER RISPARMIARE SPAZIO ---
 \begin{figure}[htbp]
@@ -90,7 +94,7 @@ Il tempo di generazione per query, misurato sulla GPU T4 durante la Fase 1, pres
 \begin{figure}[htbp]
     \centering
     % Minipage di sinistra per la Tabella
-    \begin{minipage}[c]{0.40\textwidth}
+    \begin{minipage}[c]{0.45\textwidth}
         \centering
         \begin{tabular}{lr}
         \toprule
@@ -109,14 +113,14 @@ Il tempo di generazione per query, misurato sulla GPU T4 durante la Fase 1, pres
     \end{minipage}%
     \hfill% Spazio flessibile tra tabella e grafico
     % Minipage di destra per il Grafico
-    \begin{minipage}[c]{0.55\textwidth}
+    \begin{minipage}[c]{0.50\textwidth}
         \centering
         \includegraphics[width=\textwidth]{img/generation_time_hist.png}
         \caption{Distribuzione dei tempi di generazione su GPU T4.}\label{fig:generation_time_hist}
     \end{minipage}
 \end{figure}
 
-La distribuzione è concentrata tra i 7 e i 9 secondi per la maggioranza delle query, con un'evidente coda di valori bassi (minimo 0.65s) verosimilmente corrispondenti a generazioni più brevi; come le risposte \textit{Out-of-Domain}, strutturalmente più corte di una query SPARQL completa.
+La distribuzione è concentrata tra i 7 e i 9 secondi per la maggioranza delle query, con una coda di valori bassi (minimo 0.65s) verosimilmente legata a generazioni più brevi, come le risposte \textit{Out-of-Domain}, strutturalmente più corte di una query SPARQL completa.
 
 \subsection{Tasso di esecuzione corretta}\label{subsec:tasso_esecuzione}
 
@@ -132,7 +136,7 @@ Il log di training (\cref{subsec:hyperparams}) mostra una rapida convergenza del
 \caption{Andamento della training loss e della validation loss durante il fine-tuning}\label{fig:loss_curve}
 \end{figure}
 
-È rilevante osservare che la curva di \textit{validation loss} segue da vicino quella di training senza una divergenza significativa (assenza di un evidente fenomeno di overfitting nella finestra di step osservata), e che entrambe le curve si stabilizzano ben prima del termine del training (intorno allo step 400 su un totale di 1188), suggerendo che il modello avrebbe potuto convergere anche con un numero inferiore di step.
+La curva di \textit{validation loss} segue da vicino quella di training, senza divergenze significative: segno di assenza di overfitting. Entrambe le curve si stabilizzano già intorno allo step 400 su un totale di 1188, il che suggerisce che il modello avrebbe potuto convergere anche con meno step.
 
 \newpage
 % =============================================================================
@@ -141,7 +145,7 @@ Il log di training (\cref{subsec:hyperparams}) mostra una rapida convergenza del
 
 \subsection{Metriche di retrieval per categoria}\label{subsec:metriche_categoria}
 
-Applicando la metodologia descritta in \cref{subsec:nota_metodologica} (confronto sull'insieme completo dei risultati, al netto di \code{ORDER BY}/\code{LIMIT}), le metriche di precision, recall e F1 per categoria sono le seguenti:
+Applicando la metodologia descritta in \cref{subsec:nota_metodologica}, ovvero il confronto sull'insieme completo dei risultati, al netto di \code{ORDER BY}/\code{LIMIT}, le metriche di precision, recall e F1 per categoria sono le seguenti:
 
 \begin{table}[ht]
 \centering
@@ -149,13 +153,13 @@ Applicando la metodologia descritta in \cref{subsec:nota_metodologica} (confront
 \toprule
 Categoria & N & Precision & Recall & F1 \\
 \midrule
-autore              & 26  & 1.000 & 1.000 & 1.000 \\
-container\_cartella & 30  & 1.000 & 1.000 & 1.000 \\
 data\_esatta        & 233 & 1.000 & 1.000 & 1.000 \\
-data\_intervallo    & 20  & 1.000 & 1.000 & 1.000 \\
-dispositivo         & 40  & 1.000 & 1.000 & 1.000 \\
 formato\_file       & 66  & 1.000 & 1.000 & 1.000 \\
+dispositivo         & 40  & 1.000 & 1.000 & 1.000 \\
+container\_cartella & 30  & 1.000 & 1.000 & 1.000 \\
 ricerca\_testuale   & 28  & 1.000 & 1.000 & 1.000 \\
+autore              & 26  & 1.000 & 1.000 & 1.000 \\
+data\_intervallo    & 20  & 1.000 & 1.000 & 1.000 \\
 \midrule
 \textbf{Media complessiva} & \textbf{443} & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
 \bottomrule
@@ -163,7 +167,7 @@ ricerca\_testuale   & 28  & 1.000 & 1.000 & 1.000 \\
 \caption{Precision, recall e F1 medi per categoria, calcolati sull'insieme completo dei risultati (al netto di \code{ORDER BY}/\code{LIMIT})}\label{tab:metriche_categoria}
 \end{table}
 
-Anche il riconoscimento delle richieste Out-of-Domain (\cref{subsec:errori}) raggiunge il 100\% di accuratezza: tutti i 57 esempi fuori dominio nel test set sono stati correttamente classificati come tali dal modello. Allo stesso modo, il \code{limit\_match} (corrispondenza esatta del valore richiesto nella clausola \code{LIMIT}) è verificato nel 100\% dei 443 casi non Out-of-Domain in cui almeno una delle due query (generata o di riferimento) include un \code{LIMIT}.
+Anche il riconoscimento delle richieste Out-of-Domain (\cref{subsec:errori}) raggiunge il 100\% di accuratezza: tutti i 57 esempi fuori dominio nel test set sono stati correttamente classificati come tali dal modello. Allo stesso modo, il \code{limit\_match} (corrispondenza esatta del valore richiesto nella clausola \code{LIMIT}) è verificato nel 100\% dei 443 casi non Out-of-Domain in cui almeno una delle due query include un \code{LIMIT}.
 
 \subsection{Nota critica: interpretazione dei risultati perfetti}\label{subsec:nota_critica}
 
@@ -171,7 +175,7 @@ I risultati riportati in \cref{tab:metriche_categoria} meritano una discussione 
 
 Un'ispezione diretta delle 500 coppie (query generata, query di riferimento) in \code{predictions.json} rivela che \textbf{tutte le 500 query generate dal modello sono identiche, carattere per carattere, alla rispettiva query di riferimento}. Questo è un dato di fatto distinto, e più forte, della semplice equivalenza semantica dei risultati: non si tratta di formulazioni sintatticamente diverse che producono lo stesso insieme di risultati, ma di una riproduzione esatta della stringa SPARQL attesa.
 
-Questo fenomeno è spiegabile alla luce di come il test set è stato costruito: le domande e le query di riferimento sono generate dallo stesso sistema di template parametrici (\cref{subsec:dataset_gen}) usato per produrre il dataset di training. Le 8 regole assolute del system prompt (\cref{subsec:regole}) vincolano fortemente la forma sintattica della query attesa---un'unica struttura \code{SELECT DISTINCT ?image WHERE \{\ldots\}}, predicati fissi per ciascun intento---riducendo lo spazio delle risposte plausibili a un insieme molto ristretto e, per costruzione, deterministico dato l'intento e i parametri della domanda. % chktex 26
+Questo fenomeno è spiegabile alla luce di come il test set è stato costruito: le domande e le query di riferimento sono generate dallo stesso sistema di template parametrici (\cref{subsec:dataset_gen}) usato per produrre il dataset di training. Le 8 regole assolute del system prompt (\cref{subsec:regole}) vincolano fortemente la forma sintattica della query attesa: un'unica struttura \code{SELECT DISTINCT {?}image WHERE \{\ldots\}}, predicati fissi per ciascun intento, che riduce lo spazio delle risposte plausibili a un insieme ristretto e, per costruzione, deterministico dato l'intento e i parametri della domanda.
 
 In altre parole, una corrispondenza esatta al 100\% è coerente con due ipotesi non mutuamente esclusive:
 
@@ -180,9 +184,9 @@ In altre parole, una corrispondenza esatta al 100\% è coerente con due ipotesi 
     \item Il test set, essendo generato dallo stesso processo del training set, condivide con esso una distribuzione di superficie sufficientemente vincolata (per via delle 8 regole assolute) da rendere il compito di generazione quasi deterministico, riducendo il valore di questa valutazione come misura di \emph{generalizzazione} a domande realmente nuove e formulate liberamente da un utente umano.
 \end{enumerate}
 
-A seguito di una verifica sul codice di inferenza (\code{generate\_predictions.ipynb}), è stato confermato che \textbf{il test set costituisce una reale partizione \textit{held-out}}. L'estrazione è avvenuta in modo deterministico applicando un rapporto 95\%/5\% e utilizzando il medesimo seed (\code{3407}) impiegato per la configurazione del training. Questa garanzia metodologica esclude la presenza di \textit{data leakage} o sovrapposizioni: il modello ha elaborato istanze effettivamente mai viste in fase di addestramento. Ciò avvalora l'ipotesi della reale generalizzazione strutturale (punto 1), pur confermando che tale generalizzazione avviene strettamente \textit{in-distribution} rispetto ai template.
+Il codice di inferenza (\code{generate\_predictions.ipynb}) conferma che il test set costituisce una reale partizione \textit{held-out}: l'estrazione è avvenuta in modo deterministico con un rapporto 95\%/5\% e lo stesso seed (\code{3407}) usato per la configurazione del training. Questo esclude \textit{data leakage} o sovrapposizioni (il modello ha elaborato istanze mai viste in fase di addestramento) e avvalora l'ipotesi della generalizzazione strutturale (punto 1), pur confermando che tale generalizzazione avviene strettamente \textit{in-distribution} rispetto ai template.
 
-Questa osservazione non invalida il risultato---un'accuratezza sintattica ed esecutiva del 100\% sui formati di query coperti dal generatore è comunque un traguardo solido e utile per l'applicativo---ma ne delimita correttamente la portata: la valutazione quantitativa qui presentata misura primariamente la capacità del modello di rispettare in modo affidabile e ripetibile la grammatica e le regole imposte dal system prompt, più che la sua capacità di decodificare formulazioni libere e impreviste di un ricercatore umano. Una valutazione complementare con domande poste in modo spontaneo da utenti reali, non vincolate dai template del generatore, costituisce un'estensione naturale di questo lavoro (\cref{chap:conclusioni}).
+Questa osservazione non invalida il risultato: un'accuratezza sintattica ed esecutiva del 100\% sui formati di query coperti dal generatore resta un traguardo solido e utile per l'applicativo. Ne delimita però la portata: la valutazione quantitativa qui presentata misura principalmente la capacità del modello di rispettare in modo affidabile e ripetibile la grammatica e le regole imposte dal system prompt, più che la sua capacità di decodificare formulazioni libere e impreviste di un ricercatore umano. Manca ancora una prova con domande poste in modo spontaneo da utenti reali, non vincolate dai template del generatore (\cref{chap:conclusioni}).
 
 \subsection{Miglioramento rispetto alle soluzioni precedenti}\label{subsec:miglioramento}
 
@@ -206,7 +210,7 @@ Al di là delle metriche quantitative, l'efficacia del sistema si misura anche r
 \section{Discussione dei risultati e limiti della valutazione}\label{sec:discussione}
 % =============================================================================
 
-I risultati presentati in questo capitolo possono essere riassunti in tre punti principali:
+I risultati di questo capitolo si riassumono in tre punti:
 
 \begin{enumerate}
     \item Il sistema è \textbf{sintatticamente affidabile}: il 100\% delle query generate nel test set è eseguibile senza errori contro Blazegraph, grazie al vincolo imposto dalle 8 regole del system prompt.
@@ -214,12 +218,12 @@ I risultati presentati in questo capitolo possono essere riassunti in tre punti 
     \item I punteggi di precision/recall/F1 pari a 1.000 vanno interpretati con cautela metodologica (\cref{subsec:nota_critica}): riflettono primariamente la capacità del modello di rispettare un formato di query fortemente vincolato e generato dalla stessa famiglia di template del training set, più che una misura di generalizzazione su domande realmente libere.
 \end{enumerate}
 
-Il limite principale di questa valutazione è dunque la natura \textbf{sintetica e in-dominio} del test set utilizzato. Una valutazione più conclusiva richiederebbe un confronto con domande poste da utenti reali del dominio DH.ARC, non vincolate dalla struttura dei template di generazione---un'estensione discussa come sviluppo futuro nel \cref{chap:conclusioni}.
+Il limite principale di questa valutazione è dunque la natura \textbf{sintetica e in-dominio} del test set utilizzato. Una valutazione più conclusiva richiederebbe un confronto con domande poste da utenti reali del dominio DH.ARC, non vincolate dalla struttura dei template di generazione: un'estensione discussa come sviluppo futuro nel \cref{chap:conclusioni}.
 
 % =============================================================================
 \section{Conclusioni del capitolo}\label{sec:conclusioni_cap5}
 % =============================================================================
 
-In questo capitolo abbiamo valutato il sistema lungo due assi complementari. Sul piano dell'\textbf{efficienza}, il sistema mostra tempi di generazione contenuti (media 7.45s su GPU), un tasso di esecuzione corretta del 100\% e una rapida convergenza in fase di training (loss stabilizzata già a circa un terzo del training totale). Sul piano dell'\textbf{efficacia}, le metriche di retrieval (precision, recall, F1) raggiungono il valore massimo su tutte le categorie testate, un risultato che---come discusso criticamente in \cref{subsec:nota_critica}---va attribuito principalmente all'efficacia delle regole di vincolo sintattico imposte dal system prompt e alla natura in-distribuzione del test set, più che a una dimostrata capacità di generalizzazione su input completamente liberi.
+In questo capitolo abbiamo valutato il sistema lungo due assi complementari. Sul piano dell'\textbf{efficienza}, il sistema mostra tempi di generazione contenuti (media 7.45s su GPU), un tasso di esecuzione corretta del 100\% e una rapida convergenza in fase di training (loss stabilizzata già a circa un terzo del training totale). Sul piano dell'\textbf{efficacia}, le metriche di retrieval (precision, recall, F1) raggiungono il valore massimo su tutte le categorie testate: un risultato che, come discusso in \cref{subsec:nota_critica}, va attribuito principalmente all'efficacia delle regole di vincolo sintattico imposte dal system prompt e alla natura in-distribuzione del test set, più che a una dimostrata capacità di generalizzazione su input completamente liberi.
 
 Il \cref{chap:conclusioni} riprende questi risultati per bilanciare i punti di forza del sistema con i suoi limiti noti, e per delineare gli sviluppi futuri necessari a una valutazione più rigorosa e a un utilizzo in produzione del sistema.

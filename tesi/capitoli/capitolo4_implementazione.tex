@@ -1,3 +1,5 @@
+\chapter{Architettura e dettagli implementativi}\label{chap:implementazione}
+
 \section{Introduzione al capitolo}\label{sec:intro_cap4}
 
 In questo capitolo viene illustrata nel dettaglio l'architettura tecnica e le scelte implementative che costituiscono il motore dell'LLM Query Builder. Se il \cref{chap:prototipo} ha descritto il sistema dal punto di vista dell'utente finale focalizzandosi sulla transizione da domanda naturale a risultati navigabili, in questo capitolo verranno analizzati i componenti software, lo stack tecnologico e le metodologie di addestramento che rendono possibile tale comportamento.
@@ -476,7 +478,7 @@ async def generate_sparql(request: ChatRequest):
 Abbiamo tre aspetti di questa implementazione particolarmente significativi:
 
 \begin{itemize}
-  \item \textbf{Doppio token di stop}: il modello Phi-3 utilizza il token speciale \code{<|end|>} per segnalare la fine di un turno di conversazione, distinto dal token EOS standard del tokenizer. Includere \emph{entrambi} in \code{terminators} si è rivelato necessario: in fase di sviluppo, l'omissione del token \code{<|end|>} causava generazione continuata oltre la query attesa, lo stesso fenomeno di hallucination continuata osservato con \code{packing=True} in training.
+  \item \textbf{Doppio token di stop}: il modello Phi-3 utilizza il token speciale \code{<|end|>} per segnalare la fine di un turno di conversazione, distinto dal token EOS standard del tokenizer. Includere \emph{entrambi} in \code{terminators} si è rivelato necessario: in fase di sviluppo l'omissione del token \code{<|end|>} causava generazione continuata oltre la query attesa, lo stesso fenomeno di hallucination continuata osservato con \code{packing=True} in training.
   \item \textbf{Generazione deterministica}: \code{do\_sample=False} disabilita il campionamento stocastico, rendendo la generazione completamente deterministica. Per un compito di traduzione verso un linguaggio formale come SPARQL, dove esiste tipicamente un'unica forma corretta attesa, è preferibile il determinismo.
   \item \textbf{Limite di token generati}: \code{max\_new\_tokens=250} pone un tetto alla lunghezza della risposta generata, sufficiente per la forma di query vincolata dalla Regola 1 del system prompt (\cref{subsec:regole}), oltre a fungere da rete di sicurezza contro eventuali generazioni anomale che non si arrestino correttamente sui token di stop.
 \end{itemize}
