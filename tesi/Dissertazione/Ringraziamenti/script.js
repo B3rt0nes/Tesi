@@ -32,17 +32,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Default Background
     const defaultBg = 'linear-gradient(135deg, #0f1115 0%, #1e1b4b 100%)';
 
-    // 1. Fetch and Parse CSV
-    fetch('dati.csv')
+    // 1. Fetch and Decrypt Data
+    const encryptionKey = "LaMiaTesiSegreta2024";
+
+    fetch('dati.enc')
         .then(response => {
             if (!response.ok) throw new Error("Non riesco a caricare i dati.");
             return response.text();
         })
-        .then(csvText => {
+        .then(encodedText => {
+            // Decrypt the Base64 and XOR
+            const encryptedBytes = Uint8Array.from(atob(encodedText), c => c.charCodeAt(0));
+            const keyBytes = new TextEncoder().encode(encryptionKey);
+            
+            const decryptedBytes = new Uint8Array(encryptedBytes.length);
+            for(let i = 0; i < encryptedBytes.length; i++) {
+                decryptedBytes[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
+            }
+            
+            const csvText = new TextDecoder('utf-8').decode(decryptedBytes);
             parseCSV(csvText);
         })
         .catch(err => {
-            console.error("Errore nel caricamento del CSV:", err);
+            console.error("Errore nel caricamento dei dati:", err);
             searchError.textContent = "Errore di connessione. Riprova più tardi.";
             searchError.classList.add('visible');
         });
