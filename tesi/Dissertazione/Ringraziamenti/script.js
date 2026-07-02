@@ -205,6 +205,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 3. Prepare and Handle Question
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
     function startQuestion(user) {
         currentUser = user;
         const displayName = `${user.nome} ${user.cognome}`.trim();
@@ -213,7 +221,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         optionsContainer.innerHTML = '';
         
-        user.options.forEach(opt => {
+        // Randomize options order
+        const shuffledOptions = shuffleArray([...user.options]);
+        
+        shuffledOptions.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
             btn.textContent = opt.text;
