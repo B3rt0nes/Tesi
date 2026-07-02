@@ -106,7 +106,7 @@ Questa distribuzione irregolare influenza l'interpretazione dei risultati: per q
         x expr=\coordindex,
         y=count,
         col sep=space,
-    ] {../Documenti/category_distribution.csv};
+    ] {../../Documenti/category_distribution.csv};
     \end{axis}
     \end{tikzpicture}
     \captionsetup{hypcap=false}
@@ -228,7 +228,7 @@ Il tempo di generazione per query, misurato sulla GPU T4 durante la Fase 1, pres
         fill={rgb,255:red,106;green,90;blue,205},
         draw={rgb,255:red,80;green,65;blue,180},
         opacity=0.85,
-    ] table [y=time, col sep=space] {../Documenti/generation_times.csv};
+    ] table [y=time, col sep=space] {../../Documenti/generation_times.csv};
     % % Linea verticale per la media
     % \draw[dashed, thick, red!70!black] (axis cs:7.45,0) -- (axis cs:7.45,200)
     %     node[above, font=\footnotesize] {media $= 7{,}45$\,s};
@@ -281,14 +281,14 @@ Il log di training (\cref{subsec:hyperparams}) mostra una rapida convergenza del
             color=blue,
             mark=*,
             mark size=1pt,
-        ] table [col sep=comma, x=step, y=loss] {../Documenti/training_log.csv};
+        ] table [col sep=comma, x=step, y=loss] {../../Documenti/training_log.csv};
         \addlegendentry{Training Loss}
 
         \addplot [
             color=red,
             mark=square*,
             mark size=1pt,
-        ] table [col sep=comma, x=step, y=eval_loss] {../Documenti/training_log.csv};
+        ] table [col sep=comma, x=step, y=eval_loss] {../../Documenti/training_log.csv};
         \addlegendentry{Validation Loss}
 
         \end{axis}
