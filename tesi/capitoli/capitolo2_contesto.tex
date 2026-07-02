@@ -1,6 +1,4 @@
-\chapter{Contesto scientifico e tecnologico}\label{chap:contesto}
-
-\section{Introduzione al capitolo}\label{sec:intro_cap2}
+\chapter{Dall'interrogazione formale alla ricerca semantica}\label{chap:contesto}
 
 Il capitolo esplora il background scientifico e tecnologico alla base del lavoro proposto.
 Partiamo dal \textit{problema fondamentale}: come fornire accesso content-aware a repository RDF di dimensioni massive per utenti privi di competenze tecniche formali?
@@ -15,7 +13,7 @@ La risposta richiede una comprensione su tre livelli di complessità:
 Procederemo così: nel \cref{sec:statoarte} analizziamo il divario tra i bisogni esplorativi degli studiosi umanisti e la rigidità sintattica dei sistemi tradizionali. Successivamente, nel \cref{sec:archinfo}, esaminiamo i principi fondativi dell'architettura dell'informazione che giustificano il ricorso agli LLM.\@
 Infine, nel \cref{sec:rag}, descriviamo il paradigma RAG come soluzione tecnologica che bilancia flessibilità e affidabilità.
 
-\section{Stato dell'arte: dall'interrogazione formale alla ricerca semantica}\label{sec:statoarte}
+\section{Stato dell'arte}\label{sec:statoarte}
 \subsection{Il contesto: Digital Humanities e la barriera della ricerca}\label{subsec:dh_barrier}
 
 Nel dominio delle Digital Humanities (DH) e della gestione del patrimonio culturale, la ricerca all'interno di repository RDF è un ostacolo per chi manca di competenze tecniche avanzate.
@@ -162,8 +160,8 @@ Procediamo ora ad analizzare i principi teorici che giustificano il ricorso a un
     \begin{enumerate}
         \item \textbf{Ingresso}: domanda dell'utente (es.\ ``Mostrami tutte le immagini digitalizzate con una Nikon nel 2022'');
         \item \textbf{Retrieval}: il sistema accede allo schema RDF del Datavault e recupera i predicati rilevanti (es.\ \code{exif:make}, \code{exif:dateTime});
-        \item \textbf{Augmentation}: lo schema e gli esempi di predicati vengono forniti al modello LLM come parte del prompt di sistema;
-        \item \textbf{Generation}: il modello LLM produce una query SPARQL coerente con lo schema;
+        \item \textbf{Augmentation}: lo schema e gli esempi di predicati vengono forniti al modello Quenya come parte del prompt di sistema;
+        \item \textbf{Generation}: il modello Quenya produce una query SPARQL coerente con lo schema;
         \item \textbf{Esecuzione}: la query viene eseguita su Blazegraph e i risultati vengono restituiti all'utente.
     \end{enumerate}
 
@@ -192,4 +190,4 @@ In questo capitolo abbiamo analizzato il contesto scientifico e tecnologico che 
         \item Le tecnologie emergenti (RAG, fine-tuning con LoRA) rendono possibile un'implementazione affidabile e accurata di tale interfaccia.
     \end{enumerate}
 
-    Avendo chiarito il fondamento scientifico e tecnologico della nostra soluzione, il \cref{chap:prototipo} presenta nel concreto il nostro LLM Query Builder: il dominio di applicazione (DH.ARC e il Datavault), il profilo degli utenti target, l'architettura funzionale del sistema, e i casi d'uso che dimostrano il valore aggiunto della nostra proposta nel contesto umanistico.
+    Avendo chiarito il fondamento scientifico e tecnologico della nostra soluzione, il \cref{chap:prototipo} presenta nel concreto il nostro Quenya Query Builder: il dominio di applicazione (DH.ARC e il Datavault), il profilo degli utenti target, l'architettura funzionale del sistema, e i casi d'uso che dimostrano il valore aggiunto della nostra proposta nel contesto umanistico.

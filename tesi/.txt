@@ -1,0 +1,71 @@
+2. Il Fatto e il Punto di Partenza (L'Innesco)
+2.1 Stato dell’arte
+2.1.1 Il contesto: Digital Humanities e la barriera della ricerca
+2.1.2 Il divario tra ricerca strutturata e ricerca esplorativa
+2.1.3 La “scatola vuota” e le tre barriere di SPARQL (La Scena del Crimine)
+2.2 Fondamenti di architettura dell’informazione (Le Regole dell'Indagine)
+2.2.1 L’illusione della ricerca algoritmica
+2.2.2 Recall, Precision e il compromesso ineluttabile
+2.2.3 Carico cognitivo: la Legge del minimo sforzo e la Legge di Hick
+2.2.4 Paradigma classico: navigazione e filtri rigidi
+2.2.5 Il nuovo paradigma: ricerca semantica con LLM (L'Arrivo del Detective)
+
+3. La Raccolta Sistematica (L'Analisi)
+2.3.1 Il paradigma RAG tradizionale
+2.3.2 RAG applicato a Knowledge Graphs
+2.3.3 Fine-tuning e LoRA per Domain Adaptation
+3 Quenya (Il Sistema e il Contesto) (La Mappa e i Giocatori)
+3.1 Il dominio e gli utenti target
+3.1.1 Il contesto operativo: DH.ARC e il Datavault
+3.1.2 Profilo dell’utente finale: i ricercatori del centro
+3.2 Architettura Funzionale e Interfaccia Utente
+3.2.1 L’interfaccia: come si usa il Data Vault Explorer
+3.2.2 Il flusso dell’interazione
+3.2.3 I componenti del sistema e le loro responsabilità
+3.3 Casi d’uso principali ed esempi (I Primi Interrogatori/Ricostruzioni)
+3.3.1 Caso d’uso 1: ricerca per caratteristiche...
+3.3.2 Caso d’uso 2: disambiguazione semantica dell’autore
+3.3.3 Caso d’uso 3: ricerca multi-criterio con filtro temporale
+
+4.  Il Cerchio che si Stringe (La Caccia)
+    Architettura e dettagli implementativi
+4.1 Stack tecnologico: Fedora e Blazegraph
+4.1.1 I tre layer del sistema
+4.1.2 Il flusso end-to-end di una richiesta
+4.1.3 Scelte tecnologiche principali
+4.2 Pipeline di fine-tuning dell’LLM (Costruzione della Trappola)
+4.2.1 Dataset generativo e schema SPARQL
+4.2.2 Configurazione dell’addestramento con Unsloth
+4.3 Architettura del backend e integrazione frontend
+4.3.1 Inference engine (FastAPI)
+4.4 Formato dati: dataset_datavault.jsonl
+4.4.1 Le 8 regole di generazione SPARQL (La Logica Ferrea)
+4.4.2 Gestione degli errori: OUT_OF_DOMAIN
+
+5.  La Mossa Finale (Il Confronto)
+    Valutazione
+5.0.1 Metodologia generale
+5.1 Efficienza: valutazione quantitativa (Le Prove Oggettive)
+5.1.1 Struttura dei test
+5.1.2 Distribuzione del test set per categoria
+5.1.3 Tempo di generazione
+5.1.4 Tasso di esecuzione corretta
+5.1.5 Convergenza del training
+5.2 Efficacia: valutazione qualitativa (Il Crollo dell'Alibi)
+5.2.1 Metriche di retrieval per categoria
+5.2.2 Nota critica: interpretazione dei risultati perfetti
+5.2.3 Miglioramento rispetto alle soluzioni precedenti
+
+6. La Ricostruzione e la Giustizia (L'Epilogo)
+5.3 Discussione dei risultati e limiti della valutazione (Spostato qui concettualmente come ponte verso le conclusioni)
+6 Conclusioni e sviluppi futuri
+6.1 Analisi critica del sistema (Il Quadro Completo)
+6.1.1 Risultati ottenuti e punti di forza
+6.1.2 Limiti del sistema e criticità
+6.1.3 Impatto e prospettive nel dominio umanistico (Ritorno alla Normalità)
+6.2 Sviluppi futuri (I Prossimi Fascicoli)
+6.2.1 Bug fix
+6.2.2 Feature mancanti
+6.2.3 Estensioni fondamentali
+6.2.4 Possibili sviluppi futuri
+6.3 Conclusioni finali

@@ -1,8 +1,6 @@
 \chapter{Architettura e dettagli implementativi}\label{chap:implementazione}
 
-\section{Introduzione al capitolo}\label{sec:intro_cap4}
-
-In questo capitolo viene illustrata nel dettaglio l'architettura tecnica e le scelte implementative che costituiscono il motore dell'LLM Query Builder. Se il \cref{chap:prototipo} ha descritto il sistema dal punto di vista dell'utente finale focalizzandosi sulla transizione da domanda naturale a risultati navigabili, in questo capitolo verranno analizzati i componenti software, lo stack tecnologico e le metodologie di addestramento che rendono possibile tale comportamento.
+In questo capitolo viene illustrata nel dettaglio l'architettura tecnica e le scelte implementative che costituiscono il motore dell'Quenya Query Builder. Se il \cref{chap:prototipo} ha descritto il sistema dal punto di vista dell'utente finale focalizzandosi sulla transizione da domanda naturale a risultati navigabili, in questo capitolo verranno analizzati i componenti software, lo stack tecnologico e le metodologie di addestramento che rendono possibile tale comportamento.
 
 Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'infrastruttura di base e dalle scelte tecnologiche complessive (\cref{sec:stack}), passando alla pipeline di fine-tuning del modello (\cref{sec:finetuning}), quindi si analizza l'architettura del backend e l'integrazione con il frontend (\cref{sec:backend}), per concludere con il formato e la struttura del dataset di addestramento (\cref{sec:dataset}).
 
@@ -22,7 +20,7 @@ Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'
       % --- Nodi ---
       \node[box] (frontend) {\textbf{Browser Frontend} \\ (React)};
       \node[box, right=of frontend] (backend) {\textbf{FastAPI Backend} \\ (Inference Engine)};
-      \node[box, right=of backend] (llm) {\textbf{LLM Model} \\ (Phi-3-mini)};
+      \node[box, right=of backend] (llm) {\textbf{Modello Quenya} \\ (Phi-3-mini)};
       \node[db, below=of backend] (blazegraph) {\textbf{Blazegraph} \\ (Triplestore)};
 
       % --- Archi e Connessioni con testi perfettamente distanziati ---
@@ -46,16 +44,16 @@ Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'
     }\label{fig:arch_logica}
   \end{figure}
 
-  L'infrastruttura dati su cui si appoggia l'LLM Query Builder è costituita da Fedora e Blazegraph. 
+  L'infrastruttura dati su cui si appoggia l'Quenya Query Builder è costituita da Fedora e Blazegraph. 
   Blazegraph, in particolare, opera come triplestore ad alte prestazioni per il Datavault, fornendo l'endpoint SPARQL interrogato dal nostro sistema.
   Il lavoro è consistito nel creare un layer intermedio capace di dialogare fluidamente con Blazegraph, astraendo la sintassi del linguaggio SPARQL dall'interfaccia esposta al ricercatore.
 
   \subsection{I tre layer del sistema}\label{subsec:tre_layer}
     A livello logico, il sistema suddivide il flusso di lavoro in tre layer:
     \begin{itemize}
-      \item \textbf{Presentazione (Datavault Browser)}: applicazione React con due barre di ricerca testuale, una per una ricerca google-like \code{<SearchField/>} e una per una ricerca avanzata con il tool \code{<LLMSearchBar/>} selezionabili da un bottone centrato sopra di esse.
+      \item \textbf{Presentazione (Datavault Browser)}: applicazione React con due barre di ricerca testuale, una per una ricerca google-like \code{<SearchField/>} e una per una ricerca avanzata con il tool \code{<QuenyaSearchBar/>} selezionabili da un bottone centrato sopra di esse.
       In modalità ``Assistente IA'', è possibile la visualizzazione della query SPARQL generata per utenti più esperti. Raccoglie l'input testuale dell'utente e lo invia al backend.
-      \item \textbf{Applicativo (LLM Query Builder backend, FastAPI)}: il ``cervello'' del sistema che riceve la domanda naturale, dirige il flusso:
+      \item \textbf{Applicativo (Quenya Query Builder backend, FastAPI)}: il ``cervello'' del sistema che riceve la domanda naturale, dirige il flusso:
       
       \begin{center}
         \begin{tikzpicture}[
@@ -84,7 +82,7 @@ Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'
     \begin{enumerate}
       \item L'utente digita una domanda in linguaggio naturale (es.\ ``Mostrami le immagini scansionate con una Nikon nel 2022'') nella barra di ricerca del frontend.
       \item Il frontend invia un \code{HTTP POST} al backend con il testo della domanda.
-      \item Il backend costruisce il prompt completo (system prompt con le regole di generazione + domanda dell'utente, si veda \cref{subsec:regole}) e lo sottopone al modello LLM.\@
+      \item Il backend costruisce il prompt completo (system prompt con le regole di generazione + domanda dell'utente, si veda \cref{subsec:regole}) e lo sottopone a Quenya.\@
       \item Il modello genera una query SPARQL (o un JSON di errore, se la richiesta è fuori dominio).
       \item Il backend ripulisce e valida l'output (si veda il ``sanitizzatore'', \cref{subsec:fastapi}).
       \item Se valida, la query viene eseguita su Blazegraph.
@@ -97,7 +95,7 @@ Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'
     \begin{itemize}
       \item \textbf{React} (frontend): per la parte di presentazione, già descritta funzionalmente nel \cref{chap:prototipo}.
       \item \textbf{FastAPI} (backend): scelto per la type safety offerta da Pydantic, la documentazione automatica, le performance asincrone e la facilità di integrazione diretta con PyTorch/Transformers per servire il modello.
-      \item \textbf{Phi-3-mini} (modello LLM base): dimensione contenuta (3.8 miliardi di parametri) che rende fattibile il fine-tuning mantenendo buone performance di base su compiti di generazione strutturata.
+      \item \textbf{Phi-3-mini} (modello base): dimensione contenuta (3.8 miliardi di parametri) che rende fattibile il fine-tuning mantenendo buone performance di base su compiti di generazione strutturata.
       \item \textbf{Unsloth + LoRA} (fine-tuning): Unsloth velocizza il fine-tuning e riduce il consumo di memoria; LoRA (Low-Rank Adaptation) permette di adattare il modello aggiornando solo un numero ridotto di parametri, evitando i costi proibitivi del full fine-tuning.
       \item \textbf{Blazegraph} (triplestore): tecnologia già in uso presso DH.ARC per il Datavault, con supporto nativo a SPARQL 1.1 e scalabilità fino a centinaia di milioni di triple.
     \end{itemize}
@@ -403,7 +401,7 @@ L'inference engine è stato calibrato per garantire la consistenza del \textit{s
 @app.on_event("startup")
 async def load_model():
   global model, tokenizer
-  print("Inizializzazione del motore LLM...")
+  print("Inizializzazione del motore Quenya...")
 
   tokenizer = AutoTokenizer.from_pretrained(ADAPTER_PATH)
 
@@ -417,7 +415,7 @@ async def load_model():
   # Fondiamo i pesi LoRA addestrati nel modello base
   peft_model = PeftModel.from_pretrained(base_model, ADAPTER_PATH)
   model = peft_model.merge_and_unload()
-  print("Fusione completata! Modello Datavault-LLM pronto...")
+  print("Fusione completata! Modello Quenya pronto...")
 \end{lstlisting}
 
   \begin{sloppypar}

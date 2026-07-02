@@ -1,28 +1,40 @@
-\chapter{Introduzione}\label{chap:intro}
+\chapter{Introduzione}\label{chap:introduzione}
 
-\section{Il contesto e il problema}\label{sec:intro_problema}
+% QUESTO COMANDO FORZA LATEX AD ALLUNGARE LA PAGINA CORRENTE DI 3 RIGHE
+\enlargethispage{3\baselineskip}
 
-% Qui definisci il "claim" e l'ambito:
-% - L'esigenza di esplorare dati complessi (il Datavault).
-% - Il problema: gli utenti target non conoscono SPARQL e i form tradizionali sono limitanti.
-% - Il claim: un sistema basato su LLM (LLM Query Builder) per tradurre il linguaggio naturale in SPARQL in modo trasparente.
+\section{Il contesto e il problema}\label{sec:contesto_problema}
 
+Lo scopo di questa dissertazione è permettere a utenti specializzati di effettuare ricerche avanzate all'interno di database RDF basati su Blazegraph. A questo fine, è stato sviluppato l'Quenya Query Builder, un sistema concepito per assistere il ricercatore traducendo l'intento espresso in linguaggio naturale in interrogazioni formali ed eseguibili.
 
-\section{Struttura della dissertazione}\label{sec:intro_struttura}
+Attualmente non esiste un metodo consolidato per interrogare i dati del repository per contenuto o per concetto, sebbene la struttura dei grafi su Blazegraph renda l'informazione potenzialmente ricercabile in modo flessibile. Nel caso specifico del Datavault del centro di ricerca DH.ARC, il sistema ospita circa 19 milioni di triple RDF caratterizzate da un'elevata omogeneità sintattica. Questa vastità e uniformità strutturale rende la ricerca e l'individuazione di una risorsa specifica un'operazione complessa e non immediata per un utente privo di competenze tecniche avanzate.
 
-% Brevissima anticipazione dei capitoli, 1 paragrafo ciascuno.
+Per affrontare questo ostacolo, la letteratura scientifica propone diverse soluzioni per la conversione Text-to-SPARQL, spaziando dai metodi basati su regole e grammatiche formali fino ai modelli neurali e all'impiego di Large Language Models (LLM) tramite tecniche di prompting. Tuttavia, queste soluzioni mostrano forti limiti nell'adattarsi spontaneamente a schemi RDF e ontologie di dominio specifico, esponendo il sistema a errori sintattici o strutturali.
 
-\subsection*{Capitolo 2: Contesto scientifico e tecnologico}
-% Anticipa che esplorerai il limite di SPARQL, la teoria dell'Information Architecture (berrypicking) e RAG.
+Dal punto di vista tecnologico, il progetto trae ispirazione dalla tecnica della Retrieval-Augmented Generation (RAG). Originariamente concepita per compiti di question-answering su testi non strutturati, in questo lavoro la RAG è stata riadattata per vincolare l'LLM allo schema RDF reale del Datavault, riducendo radicalmente il rischio di allucinazioni su classi o proprietà inesistenti nel database.
 
-\subsection*{Capitolo 3: Il prototipo}
-% Anticipa che presenterai l'utente finale, il dominio e i tre casi d'uso principali.
+Il contributo pratico del lavoro si concretizza in un'architettura software che interagisce con l'utente in italiano naturale e genera una query SPARQL eseguibile direttamente sull'endpoint Blazegraph, mostrando poi i risultati filtrati all'interno di un'interfaccia grafica navigabile.
 
-\subsection*{Capitolo 4: Architettura e implementazione}
-% Anticipa lo stack (Fedora/Blazegraph), il fine-tuning con Unsloth e il backend FastAPI.
+Il prototipo è stato sottoposto a una valutazione sia quantitativa sia qualitativa. L'analisi quantitativa misura l'efficienza e l'accuratezza del modello, calcolando i parametri di precision e recall rispetto a un insieme di query di riferimento. L'analisi qualitativa esplora l'efficacia del sistema sul campo, verificando la capacità di supportare la ricerca esplorativa e di favorire la serendipity, una dinamica di scoperta imprevista particolarmente significativa nel dominio delle Digital Humanities.
 
-\subsection*{Capitolo 5: Valutazione}
-% Anticipa i test di efficienza (Kaggle vs locale) e di efficacia (precision/recall, allucinazioni).
+L'elaborato si conclude delineando i vincoli tecnici riscontrati, in particolare nella gestione di richieste complesse o ambigue, e propone l'estensione del framework ad altri domini semantici come sviluppo futuro del progetto.
 
-\subsection*{Capitolo 6: Conclusioni e sviluppi futuri}
-% Anticipa che farai un bilancio dei risultati raggiunti e delle estensioni possibili per altri domini umanistici.
+\section{Struttura della dissertazione}\label{sec:struttura_dissertazione}
+
+Per dimostrare la validità della tesi e presentare compiutamente il sistema realizzato, il percorso argomentativo è organizzato attorno ai principali problemi logici e realizzativi affrontati:
+
+\begin{itemize}
+    % QUESTI DUE COMANDI RIMUOVONO LO SPAZIO BIANCO EXTRA TRA I PUNTI ELENCO
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    
+    \item Per inquadrare il problema dal punto di vista teorico, è necessario analizzare lo stato dell'arte della ricerca semantica nel patrimonio culturale e comprendere i principi dell'architettura dell'informazione che governano il carico cognitivo dell'utente. Questa rassegna critica, unita allo studio delle tecnologie abilitanti come i modelli linguistici compatti e la tecnica RAG, permette di superare i limiti strutturali dei sistemi algoritmici tradizionali. Questo problema è trattato in modo più approfondito nel \cref{chap:contesto}.
+    
+    \item Una volta definiti i presupposti teorici, occorre comprendere come l'utente possa esprimere bisogni informativi fluidi senza scontrarsi con la rigidità formale dei linguaggi di interrogazione. L'analisi user-centered delle modalità di interazione, della Quenya Search Bar e dei casi d'uso concreti sul campo dimostra l'azzeramento del carico cognitivo tramite un'interfaccia conversazionale. Questo aspetto viene presentato in dettaglio nel \cref{chap:prototipo}
+    
+    \item La dimostrazione della fattibilità tecnica richiede la scomposizione della struttura software e delle scelte implementative necessarie per orchestrare il sistema. L'ingegnerizzazione del dataset generativo, la pipeline di fine-tuning dell'adapter LoRA e la realizzazione dei filtri del backend FastAPI risolvono il trasferimento di complessità dall'utente alla macchina, gestendo in modo difensivo le anomalie dei dati reali. Questi dettagli sono illustrati esaustivamente nel \cref{chap:implementazione}.
+    
+    \item I risultati e l'affidabilità dell'architettura proposta devono essere verificati empiricamente attraverso misure di rendimento formali. La metodologia di test quantitativa e qualitativa basata sulle metriche di precision e recall ed eseguita direttamente contro l'endpoint Blazegraph convalida l'accuratezza sintattica del traduttore semantico ed esamina la natura sintetica del test set. La valutazione complessiva è l'oggetto del \cref{chap:valutazione}.
+    
+    \item Infine, è essenziale tracciare un bilancio onesto sull'impatto del sistema, isolando i reali punti di forza dai vincoli computazionali e metodologici emersi in produzione. L'identificazione delle aree ancora carenti definisce la pianificazione degli interventi futuri, dalla configurabilità dei parametri fino alla ricerca per concetto visivo. Questa sintesi critica e le prospettive future compongono il \cref{chap:conclusioni}.
+\end{itemize}

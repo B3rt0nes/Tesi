@@ -1,9 +1,5 @@
 \chapter{Conclusioni e sviluppi futuri}\label{chap:conclusioni}
 
-% =============================================================================
-\section{Introduzione al capitolo}\label{sec:intro_cap6}
-% =============================================================================
-
 I capitoli precedenti hanno definito il problema (\cref{chap:contesto}), presentato la soluzione (\cref{chap:prototipo}), descritto la sua realizzazione tecnica (\cref{chap:implementazione}) e misurato il suo comportamento (\cref{chap:valutazione}). Questo capitolo chiude il lavoro con un bilancio onesto: cosa il sistema realizza bene, dove restano margini di miglioramento, e perché rappresenti comunque un passo avanti rispetto alla situazione di partenza descritta nel \cref{chap:contesto}, ovvero l'sassenza totale di ricerca per contenuto o concetto sul Datavault.
 Chiudiamo delineando gli sviluppi futuri, ordinati per priorità: dai bug fix più urgenti fino alle estensioni più ambiziose.
 
@@ -103,7 +99,7 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
 \section{Conclusioni finali}\label{sec:conclusioni_finali}
 % =============================================================================
 
-Questo lavoro nasce da un'osservazione semplice: il Datavault di DH.ARC contiene milioni di triple RDF, ma nessun modo agile per ricercatori umanisti di interrogarle se non conoscendo SPARQL.\@ Abbiamo affrontato questo problema costruendo un LLM Query Builder che traduce domande in linguaggio naturale italiano in query SPARQL valide, attraverso il fine-tuning di un modello di dimensioni contenute su un dataset sintetico costruito appositamente per il dominio.
+Questo lavoro nasce da un'osservazione semplice: il Datavault di DH.ARC contiene milioni di triple RDF, ma nessun modo agile per ricercatori umanisti di interrogarle se non conoscendo SPARQL.\@ Abbiamo affrontato questo problema costruendo un Quenya Query Builder che traduce domande in linguaggio naturale italiano in query SPARQL valide, attraverso il fine-tuning di un modello di dimensioni contenute su un dataset sintetico costruito appositamente per il dominio.
 
 I risultati raccolti nel \cref{chap:valutazione} mostrano un sistema sintatticamente affidabile, efficiente nei tempi di generazione e coerente nella sua architettura tra fase di training e fase di inferenza. Allo stesso tempo, la discussione onesta dei suoi limiti (una valutazione ancora in-distribuzione, l'assenza di un test con utenti reali, la fragilità nota rispetto ai dati di produzione) delimita la portata di quanto qui dimostrato, senza sminuire il fatto che Datavault dispone di un meccanismo di ricerca per contenuto praticabile da chi non conosce SPARQL.\@
 

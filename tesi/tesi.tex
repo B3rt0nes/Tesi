@@ -268,30 +268,29 @@
 \vspace{15mm}
 
 % Titolo della tesi (max 12 parole, deve esprimere chiaramente il "claim")
-{\Huge{\bf Traduzione da linguaggio naturale}}\\
+{\Huge{\bf Quenya: un traduttore}}\\
 \vspace{3mm}
-{\Huge{\bf a query per Blazegraph}}\\
+{\Huge{\bf da linguaggio naturale a}}\\
 \vspace{3mm}
-% {\Huge{\bf Blazegraph DB}}\\
-% \vspace{3mm}
+{\Huge{\bf query per Blazegraph}}
 
 \end{center}
 
-\vspace{10mm}
+\vspace{20mm}
 
 \begin{minipage}[t]{0.40\textwidth}
-{\Large{\bf Relatore: \\ Chiar.mo Prof.\\ Fabio Vitali}}
+{\Large{\bf Relatore:}\\ \Large{\bf Chiar.mo Prof.}\\ \Large{\bf Fabio Vitali}}
+\vspace{1cm}
 
-\vspace{3mm}
+{\Large{\bf Correlatore:}\\ \Large{\bf Chiar.mo Prof.}\\ \Large{\bf Paolo Bonora}}
 
-% Decommentare se presente un correlatore:
-% {\Large{\bf Correlatore: \\ Chiar.mo Prof.\\ Nome Cognome}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.40\textwidth}\raggedleft{\Large{\bf Presentata da: \\ Alberto Zuccari}}
 \end{minipage}
 
-\vspace{30mm}
+% \vspace{30mm}
+\vfill
 
 \rule[0.5cm]{15.8cm}{0.6mm}
 
@@ -306,23 +305,24 @@
 % PAGINA DELLE PAROLE CHIAVE (DA COMPLETARE ALLA FINE)
 
 \restoregeometry\newpage
-\begin{center}
-    (DA FARE ALLA FINE)\\
-    5 parole chiave per caratterizzare il contenuto della dissertazione:
-\end{center}
 
-\begin{tikzpicture}[overlay,remember picture,shift=(current page.center)]
-\pgfmathsetseed{3}
-\foreach [count=\count] \word in {Parola 1, parola 2, parola 3, parola 4, parola 5} {
-\node [
-    xshift={(mod(\count,3)-1)*(\paperwidth/4)},
-    yshift={(mod(\count,7)-3)*(\paperwidth/6)},
-    xshift=rand*4cm,
-    yshift=rand*2cm,
-    font=\large] {\word};
-}
-\end{tikzpicture}
-\newpage
+% \begin{center}
+%     (DA FARE ALLA FINE)\\
+%     5 parole chiave per caratterizzare il contenuto della dissertazione:
+% \end{center}
+
+% \begin{tikzpicture}[overlay,remember picture,shift=(current page.center)]
+% \pgfmathsetseed{3}
+% \foreach [count=\count] \word in {Parola 1, parola 2, parola 3, parola 4, parola 5} {
+% \node [
+%     xshift={(mod(\count,3)-1)*(\paperwidth/4)},
+%     yshift={(mod(\count,7)-3)*(\paperwidth/6)},
+%     xshift=rand*4cm,
+%     yshift=rand*2cm,
+%     font=\large] {\word};
+% }
+% \end{tikzpicture}
+% \newpage
 
 
 % DEDICA
@@ -343,8 +343,14 @@
 % Contenuto: contesto, problema, approccio, risultati principali.
 
 \newpage~\newpage
-\chapter*{Abstract}
-Abstract qui (da completare alla fine).
+\chapter*{Abstract}\label{chap:abstract}
+L'interrogazione di database RDF solitamente richiede competenze tecniche avanzate, in particolare la padronanza del linguaggio formale SPARQL.\@ In ambito umanistico questa barriera può ostacolare i ricercatori nell'esplorazione e nella valorizzazione del patrimonio informativo. 
+
+Questa dissertazione presenta la progettazione, lo sviluppo e la valutazione di ``Quenya'', un sistema intelligente integrato nel Datavault del centro di ricerca DH.ARC, progettato specificamente per risolvere questa problematica. Il Datavault ospita circa 19 milioni di triple RDF, un volume che rende la ricerca esplorativa complessa per la sua utenza comune. Il sistema proposto traduce interrogazioni espresse in linguaggio naturale in query SPARQL eseguibili, colmando il divario tra l'intento informativo dell'utente e la rigidità strutturale del grafo semantico.
+
+Metodologicamente, il lavoro supera i limiti delle tradizionali soluzioni Text-to-SPARQL combinando il fine-tuning di modelli linguistici compatti tramite adattatori LoRA con un approccio ispirato alla Retrieval-Augmented Generation (RAG). Questa architettura vincola il processo generativo allo schema ontologico reale del repository, minimizzando il rischio di allucinazioni sintattiche o strutturali. L'infrastruttura software si avvale di un'interfaccia utente conversazionale, concepita per minimizzare il carico cognitivo, supportata da un backend difensivo che gestisce la traduzione e interroga direttamente l'endpoint Blazegraph.
+
+Il prototipo è stato sottoposto a una valutazione quantitativa, misurando \textit{precision} e \textit{recall} per certificare l'accuratezza delle query generate, e ad un'analisi qualitativa focalizzata sulla capacità di supportare la ricerca fluida e dinamiche di \textit{serendipity}. I risultati dimostrano la solidità del traduttore semantico sul campo, pur delineando alcuni vincoli nella gestione di richieste fortemente ambigue. In conclusione, il lavoro conferma l'efficacia dell'intelligenza artificiale generativa per migliorare l'accesso agli archivi semantici, aprendo nuove prospettive per future estensioni multidisciplinari.
 
 
 % INDICI
@@ -361,9 +367,9 @@ Abstract qui (da completare alla fine).
 \let\newpage\relax
 
 \listoffigures
-\vspace*{1cm}
+% \vspace*{1cm}
 \listoftables
-\vspace*{1cm}
+% \vspace*{1cm}
 \lstlistoflistings\endgroup
 
 \newpage~\newpage
@@ -399,31 +405,18 @@ Abstract qui (da completare alla fine).
 
 
 
-% ESEMPI DI COMANDI LATEX UTILI
-% Rimuovi o commenta questa sezione prima della stampa finale.
-
-% \chapter*{Esempi di comandi \LaTeX{} utili}
-% \addcontentsline{toc}{chapter}{Esempi di comandi \LaTeX{} utili}
-% % Quando sei pronto, commenta la riga seguente:
-% \input{capitoli/esempi_latex}
-
-
-
-% RIFERIMENTI BIBLIOGRAFICI
-% File: refs.bib  —  segui le regole di Vitali descritte nel preambolo.
-
 \renewcommand{\bibsection}{}
 \chapter*{Riferimenti bibliografici}
 \addcontentsline{toc}{chapter}{Riferimenti bibliografici}
-\nocite{*}   % Include tutti i riferimenti da refs.bib anche senza \cite espliciti
+\nocite{*}
 \bibliography{refs}
 \newpage
 
 
 % RINGRAZIAMENTI
 
-\newpage~\newpage
-\chapter*{Ringraziamenti}
-Grazie a tutt*.
+% \newpage~\newpage
+% \chapter*{Ringraziamenti}
+% Grazie a tutt*.
 
 \end{document}

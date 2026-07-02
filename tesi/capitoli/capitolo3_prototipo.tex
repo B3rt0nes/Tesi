@@ -1,8 +1,6 @@
-\chapter{Il prototipo}\label{chap:prototipo}
+\chapter{Quenya}\label{chap:prototipo}
 
-\section{Introduzione al capitolo}\label{sec:intro_cap3}
-
-    Avendo chiarito il fondamento scientifico e tecnologico nel \cref{chap:contesto}, presentiamo ora il prototipo di LLM Query Builder sviluppato per sopperire alle problematiche riscontrate.
+    Avendo chiarito il fondamento scientifico e tecnologico nel \cref{chap:contesto}, presentiamo ora il prototipo di Quenya (\textbf{Qu}ery \textbf{E}ngine for \textbf{N}avigating \textbf{Y}our \textbf{A}rchives), un query builder sviluppato per sopperire alle problematiche riscontrate.
 
     Questo capitolo è organizzato secondo una prospettiva \textit{user-centered}: partiamo dal dominio di applicazione (DH.ARC e il Datavault) e dal profilo degli utenti target (\cref{sec:dominio}), passiamo all'architettura funzionale e all'interfaccia del sistema (\cref{sec:architettura}), e concludiamo con tre scenari d'uso concreti (\cref{sec:casiduso}) arricchiti dalle relative schermate, per dimostrare il valore aggiunto della nostra proposta.
 
@@ -44,12 +42,12 @@
         Per risolvere i problemi di carico cognitivo e rigidità formale descritti nel capitolo precedente, il sistema si presenta all'utente attraverso un'interfaccia minimalista e conversazionale (il Data Vault Explorer). 
         Per superare le barriere legate all'alto carico cognitivo e alla rigidità formale descritte nelle sezioni precedenti, l'applicativo è stato esteso introducendo un modulo di interazione minimalista e conversazionale.
         
-        Invece di dover navigare attraverso complessi moduli a filtri multipli o di dover studiare a priori l'ontologia sottostante per formulare interrogazioni dirette, l'utente ha ora a disposizione un singolo e intuitivo punto di ingresso: la \textit{LLM Search Bar}. Questa scelta di design permette di aggirare la complessità del database dietro un'interfaccia familiare. Il sistema si presenta visivamente in modo simile ai motori di ricerca, tuttavia, è potenziato dalla capacità del Large Language Model di interpretare le sfumature del linguaggio naturale, traducendo in tempo reale l'intento esplorativo del ricercatore in una query SPARQL formale ed eseguibile.
+        Invece di dover navigare attraverso complessi moduli a filtri multipli o di dover studiare a priori l'ontologia sottostante per formulare interrogazioni dirette, l'utente ha ora a disposizione un singolo e intuitivo punto di ingresso: la \textit{Quenya Search Bar}. Questa scelta di design permette di aggirare la complessità del database dietro un'interfaccia familiare. Il sistema si presenta visivamente in modo simile ai motori di ricerca, tuttavia, è potenziato dalla capacità del Large Language Model di interpretare le sfumature del linguaggio naturale, traducendo in tempo reale l'intento esplorativo del ricercatore in una query SPARQL formale ed eseguibile.
 
         \begin{figure}[H]
             \centering
             \includegraphics[width=0.9\textwidth]{img/schermata_principale.png}
-            \caption{L'interfaccia principale del Data Vault Explorer con la LLM Search Bar.}\label{fig:schermata_principale}
+            \caption{L'interfaccia principale del Data Vault Explorer con la Quenya Search Bar.}\label{fig:schermata_principale}
         \end{figure}
 
         Come visibile in \cref{fig:schermata_principale}, l'utilizzo del sistema si riduce a un'azione elementare: digitare il proprio bisogno informativo in italiano naturale. Il sistema restituisce i risultati strutturandoli in una lista di risorse, permettendo un'esplorazione fluida e intuitiva dei dati.
@@ -81,13 +79,13 @@
             \draw[arrow, dashed] (output.west) -- ++(-1.5,0) |- (input.west) node[pos=0.25, left, font=\footnotesize\itshape, align=right] {Esplorazione\\iterativa};
 
             \end{tikzpicture}
-            \caption{Schema del flusso di interazione tra utente, LLM Query Builder e Datavault.}\label{fig:flusso_interazione}
+            \caption{Schema del flusso di interazione tra utente, Quenya Query Builder e Datavault.}\label{fig:flusso_interazione}
         \end{figure}
 
         Come illustrato nello schema, le fasi del processo sono le seguenti:
         \begin{enumerate}
             \item \textbf{Input}: l'utente digita il proprio bisogno informativo in italiano in forma libera. In questa fase non vi sono campi strutturati da compilare né regole di sintassi da rispettare.
-            \item \textbf{Elaborazione}: il testo naturale viene inviato al componente intelligente (il modello LLM fine-tuned) che, essendo a conoscenza dello schema RDF e dell'ontologia del Datavault, produce autonomamente la query SPARQL corrispondente.
+            \item \textbf{Elaborazione}: il testo naturale viene inviato al componente intelligente (il modello Quenya fine-tuned) che, essendo a conoscenza dello schema RDF e dell'ontologia del Datavault, produce autonomamente la query SPARQL corrispondente.
             \item \textbf{Esecuzione e Output}: la query SPARQL viene inoltrata a Blazegraph. L'utente non è esposto al codice formale (salvo esplicita richiesta), ma visualizza esclusivamente i risultati pertinenti tradotti nell'interfaccia grafica, aggirando così del tutto la barriera tecnologica.
         \end{enumerate}
 
@@ -95,7 +93,7 @@
         Il sistema si articola in tre componenti principali:
         \begin{enumerate}
             \item \textbf{Frontend (Data Vault Explorer)}: raccoglie l'input testuale e renderizza i risultati in formato navigabile.
-            \item \textbf{Backend (LLM Query Builder + RAG Engine)}: il ``cervello'' del sistema. Riceve la domanda, recupera lo schema RDF, genera la query SPARQL tramite il modello e gestisce gli errori semantici (evitando le allucinazioni).
+            \item \textbf{Backend (Quenya Query Builder + RAG Engine)}: il ``cervello'' del sistema. Riceve la domanda, recupera lo schema RDF, genera la query SPARQL tramite il modello e gestisce gli errori semantici (evitando le allucinazioni).
             \item \textbf{Data Layer (Blazegraph + Schema RDF)}: immagazzina i milioni di triple ed esegue l'interrogazione generata dal backend.
         \end{enumerate}
 
