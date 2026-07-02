@@ -1,8 +1,6 @@
 \chapter{Architettura e dettagli implementativi}\label{chap:implementazione}
 
-In questo capitolo viene illustrata nel dettaglio l'architettura tecnica e le scelte implementative che costituiscono il motore dell'Quenya Query Builder. Se il \cref{chap:prototipo} ha descritto il sistema dal punto di vista dell'utente finale focalizzandosi sulla transizione da domanda naturale a risultati navigabili, in questo capitolo verranno analizzati i componenti software, lo stack tecnologico e le metodologie di addestramento che rendono possibile tale comportamento.
-
-Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'infrastruttura di base e dalle scelte tecnologiche complessive (\cref{sec:stack}), passando alla pipeline di fine-tuning del modello (\cref{sec:finetuning}), quindi si analizza l'architettura del backend e l'integrazione con il frontend (\cref{sec:backend}), per concludere con il formato e la struttura del dataset di addestramento (\cref{sec:dataset}).
+Questo capitolo illustra l'architettura tecnica e le scelte implementative del motore di Quenya. Mentre il \cref{chap:prototipo} descriveva il sistema dal punto di vista dell'utente finale, qui analizziamo i componenti software, lo stack tecnologico e le metodologie di addestramento alla base dell'applicativo.
 
 \section{Stack tecnologico: Fedora e Blazegraph}\label{sec:stack}
   \begin{figure}[htbp]
@@ -44,16 +42,16 @@ Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'
     }\label{fig:arch_logica}
   \end{figure}
 
-  L'infrastruttura dati su cui si appoggia l'Quenya Query Builder è costituita da Fedora e Blazegraph. 
-  Blazegraph, in particolare, opera come triplestore ad alte prestazioni per il Datavault, fornendo l'endpoint SPARQL interrogato dal nostro sistema.
-  Il lavoro è consistito nel creare un layer intermedio capace di dialogare fluidamente con Blazegraph, astraendo la sintassi del linguaggio SPARQL dall'interfaccia esposta al ricercatore.
+  L'infrastruttura dati su cui si appoggia Quenya è costituita da Fedora e Blazegraph. 
+  Blazegraph opera come triplestore per il Datavault e fornisce l'endpoint SPARQL interrogato dal sistema.
+  Il nostro lavoro è consistito nel creare un layer intermedio per dialogare con Blazegraph, astraendo la sintassi SPARQL dall'interfaccia utente.
 
   \subsection{I tre layer del sistema}\label{subsec:tre_layer}
     A livello logico, il sistema suddivide il flusso di lavoro in tre layer:
     \begin{itemize}
       \item \textbf{Presentazione (Datavault Browser)}: applicazione React con due barre di ricerca testuale, una per una ricerca google-like \code{<SearchField/>} e una per una ricerca avanzata con il tool \code{<QuenyaSearchBar/>} selezionabili da un bottone centrato sopra di esse.
       In modalità ``Assistente IA'', è possibile la visualizzazione della query SPARQL generata per utenti più esperti. Raccoglie l'input testuale dell'utente e lo invia al backend.
-      \item \textbf{Applicativo (Quenya Query Builder backend, FastAPI)}: il ``cervello'' del sistema che riceve la domanda naturale, dirige il flusso:
+      \item \textbf{Applicativo (Quenya Query Builder backend, FastAPI)}: il componente centrale che riceve la domanda naturale, dirige il flusso:
       
       \begin{center}
         \begin{tikzpicture}[
@@ -72,7 +70,7 @@ Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'
       \end{center}
 
       e gestisce gli errori (query malformate, allucinazioni, timeout, richieste out-of-domain) e restituisce risultati strutturati al frontend.
-      \item \textbf{LDati (Datavault / Blazegraph)}: immagazzina i milioni di triple RDF del Datavault, esegue la query SPARQL ricevuta dal backend e ne restituisce i risultati grezzi.
+      \item \textbf{Data Layer (Datavault / Blazegraph)}: immagazzina i milioni di triple RDF del Datavault, esegue la query SPARQL ricevuta dal backend e ne restituisce i risultati grezzi.
     \end{itemize}
 
   \subsection{Il flusso end-to-end di una richiesta}\label{subsec:flusso_e2e}
@@ -96,18 +94,18 @@ Il capitolo segue il flusso logico della costruzione del sistema: si parte dall'
       \item \textbf{React} (frontend): per la parte di presentazione, già descritta funzionalmente nel \cref{chap:prototipo}.
       \item \textbf{FastAPI} (backend): scelto per la type safety offerta da Pydantic, la documentazione automatica, le performance asincrone e la facilità di integrazione diretta con PyTorch/Transformers per servire il modello.
       \item \textbf{Phi-3-mini} (modello base): dimensione contenuta (3.8 miliardi di parametri) che rende fattibile il fine-tuning mantenendo buone performance di base su compiti di generazione strutturata.
-      \item \textbf{Unsloth + LoRA} (fine-tuning): Unsloth velocizza il fine-tuning e riduce il consumo di memoria; LoRA (Low-Rank Adaptation) permette di adattare il modello aggiornando solo un numero ridotto di parametri, evitando i costi proibitivi del full fine-tuning.
+      \item \textbf{Unsloth + LoRA} (fine-tuning): Unsloth ottimizza il fine-tuning e riduce l'impronta in memoria; LoRA (Low-Rank Adaptation) permette di adattare il modello aggiornando solo un sottoinsieme di parametri, abbattendo i costi computazionali.
       \item \textbf{Blazegraph} (triplestore): tecnologia già in uso presso DH.ARC per il Datavault, con supporto nativo a SPARQL 1.1 e scalabilità fino a centinaia di milioni di triple.
     \end{itemize}
 
     % Lo sviluppo iterativo dei componenti in Python e del frontend in React è stato facilitato dall'impiego di ambienti di sviluppo avanzati basati su agenti che hanno permesso di ottimizzare la stesura del codice e testare rapidamente le configurazioni dei prompt di sistema direttamente all'interno della codebase.
 
 \section{Pipeline di fine-tuning dell'LLM}\label{sec:finetuning}
-  Per ottenere traduzioni accurate dal linguaggio naturale a SPARQL, l'utilizzo di un LLM generico si è rivelato insufficiente: un modello addestrato su testo web conosce SPARQL in linea di principio, ma non è ottimizzato per generare query corrette per lo specifico schema del Datavault, rischiando di allucinare predicati inesistenti o di non comprendere le particolarità dell'ontologia reale. Si è resa quindi necessaria una fase di \textit{domain adaptation} tramite fine-tuning.
+  L'utilizzo di un LLM generico si è rivelato insufficiente per ottenere traduzioni affidabili dal linguaggio naturale a SPARQL.\@ Un modello addestrato su testo web conosce la sintassi SPARQL, ma non possiede la mappa mentale dello specifico schema del Datavault, rischiando di allucinare predicati inesistenti o ignorare le particolarità dell'ontologia. Abbiamo perciò introdotto una fase di \textit{domain adaptation} tramite fine-tuning.
 
   \subsection{Dataset generativo e schema SPARQL}\label{subsec:dataset_gen}
-    L'addestramento è stato basato su un dataset generativo, prodotto tramite lo script \code{genera\_dataset.py} secondo un approccio a \textbf{template parametrici}: per ciascuna categoria di query viene definita una funzione Python che, dati alcuni parametri (un anno, un nome di dispositivo, un formato file, ecc.), restituisce la query SPARQL corrispondente già popolata con quei valori. 
-    La domanda in linguaggio naturale che accompagna ciascuna query viene generata in parallelo variando lessico e struttura della frase, in modo da esporre il modello a una pluralità di formulazioni per lo stesso intento.
+    Il dataset di addestramento è stato prodotto in modo sintetico tramite lo script \code{genera\_dataset.py}, usando un approccio a \textbf{template parametrici}. Per ciascuna categoria di query è stata definita una funzione Python che, ricevuti parametri come l'anno o il formato file, restituisce la query SPARQL popolata. 
+    La corrispondente domanda in linguaggio naturale viene generata variando lessico e struttura sintattica, esponendo così il modello a una pluralità di formulazioni per il medesimo intento.
 
     \subsubsection{Il ciclo di generazione}
       Il cuore del generatore è il ciclo di costruzione del dataset, riportato (in forma semplificata) di seguito:
@@ -148,8 +146,8 @@ def crea_dataset_massivo(target: int = 10000):
     }
 \end{lstlisting}
 
-Questa struttura garantisce due proprietà desiderabili per il dataset: una distribuzione controllata tra le diverse categorie di query (evitando lo sbilanciamento verso le categorie più semplici da generare), e un'iniezione mirata di esempi out-of-domain in proporzione fissa (circa il 10\% del totale), necessaria affinché il modello impari a riconoscere e rifiutare richieste estranee al dominio del Datavault senza che questo comportamento venga sotto-rappresentato nel training.
-Inoltre, l'approccio generativo ha man mano permesso di raffinare gli esempi, correggendo a monte gli errori sistematici nella gestione dei prefissi ontologici e dei metadati emersi durante le prime fasi di test del modello.
+Questa architettura garantisce una distribuzione controllata tra le categorie di query, prevenendo sbilanciamenti verso quelle più semplici. Assicura inoltre un'iniezione costante di esempi out-of-domain (circa il 10\% del totale), essenziale affinché il modello impari a riconoscere richieste estranee al Datavault.
+L'approccio generativo ha anche permesso di iterare rapidamente sugli esempi, correggendo a monte gli errori di formattazione o di mapping ontologico emersi nelle prime fasi di test.
 
 \subsubsection{Le 13 categorie di query SPARQL (+1 Out-of-Domain)}
 
@@ -185,7 +183,7 @@ Si noti come le categorie 1 e 13 condividano lo stesso intento superficiale (``r
 % \begin{comment}
 \subsubsection{Edge case e bug risolti durante la generazione}\label{subsec:edge_cases_generazione}
 
-Durante la fase di validazione, l'analisi delle query fallite aveva evidenziato un tasso di errore significativo dovuto a una scorretta generazione della sintassi SPARQL, in particolare a causa di un'errata gestione dei prefissi dei metadati. Per risolvere la problematica in modo strutturale, si è proceduto a raffinare gli esempi all'interno del dataset di addestramento, correggendo esplicitamente il modo in cui il modello mappa e dichiara i prefissi ontologici, e gestendo puntualmente i \textit{type-mismatch} tra proprietà testuali e numeriche. Nello specifico, gli edge case principali risolti sono stati:
+Nelle prime fasi di validazione avevamo registrato un tasso di errore significativo dovuto a difetti di sintassi SPARQL, in primis un'errata gestione dei prefissi ontologici. Anziché implementare controlli a valle, abbiamo raffinato la sorgente dei dati correggendo i template del training set. Nello specifico, abbiamo risolto i seguenti casi limite:
 
 \begin{itemize}
   \item \textbf{Type mismatch su date}: il formato del filtro temporale era inizialmente incoerente con \code{xsd:dateTime} --- risolto normalizzando il formato nei template e, come descritto nella Regola 6 del system prompt, imponendo il confronto tramite \code{STR ()} anziché tramite tipi di dato tipizzati.
@@ -227,7 +225,7 @@ SELECT DISTINCT ?p WHERE {
 } LIMIT 5
 \end{lstlisting}
 
-\paragraph{Impatto del bug.} Questo mismatch ha un impatto sistemico: qualunque query SPARQL generata utilizzando il namespace EXIF \textit{canonico} (quello atteso da un modello addestrato su conoscenza generale o su un dataset che rispetti lo standard W3C) restituisce sistematicamente zero risultati per tutti i predicati EXIF, indipendentemente dalla correttezza logica della query stessa. Poiché i predicati EXIF coprono la quasi totalità delle risorse del Datavault, questo bug avrebbe potuto compromettere la quasi totalità delle interrogazioni utili del sistema.
+\paragraph{Impatto del bug.} Questo mismatch invalida a cascata le interrogazioni: qualunque query SPARQL basata sul namespace EXIF \textit{canonico} restituisce zero risultati per i predicati EXIF, a prescindere dalla sua validità logica. Poiché tali predicati coprono gran parte delle risorse del Datavault, il difetto comprometteva la maggior parte dei casi d'uso del sistema.
 
 \paragraph{Soluzione adottata: allineamento al dato reale, non correzione.} A differenza di un approccio ``correttivo'' (normalizzare il namespace malformato a quello standard prima dell'esecuzione della query), la soluzione adottata è stata l'\textbf{allineamento sistematico al namespace reale}, poiché il typo è presente fisicamente nei dati e non è modificabile lato Datavault. Qualunque normalizzazione verso il namespace standard avrebbe prodotto query sintatticamente corrette ma semanticamente vuote. La soluzione è stata applicata in due punti della pipeline:
 
@@ -251,11 +249,11 @@ PREFISSI = (
 \newpage
 
 \subsection{Configurazione dell'addestramento con Unsloth}\label{subsec:unsloth}
-    Per ottimizzare i tempi di addestramento e ridurre l'impronta in memoria VRAM, la pipeline è stata implementata avvalendosi della libreria Unsloth, che fornisce un'integrazione nativa e ottimizzata per il fine-tuning con LoRA (Low-Rank Adaptation) su modelli come Phi-3.
+    La pipeline di addestramento è stata implementata tramite la libreria Unsloth, per contenere i tempi di esecuzione e il consumo di VRAM, avvalendosi dell'approccio LoRA (Low-Rank Adaptation).
 
     \subsubsection{L'algoritmo LoRA}
-        LoRA evita i costi proibitivi di un full fine-tuning (che richiederebbe risorse GPU non disponibili sull'hardware consumer usato per il training) congelando i pesi originali del modello e introducendo, per ciascuna matrice di pesi $W$ presa di mira, un aggiornamento di basso rango: $W' = W + \frac{\alpha}{r}BA$ dove $B \in \mathbb{R}^{d \times r}$ e $A \in \mathbb{R}^{r \times k}$, con il rank $r \ll \min(d,k)$. Durante il training vengono aggiornate solamente le matrici $A$ e $B$, riducendo il numero di parametri allenabili rispetto ai miliardi di parametri del modello completo.\\
-        Nel nostro caso $r = 16 = \alpha$ (quindi $\alpha/r = 1$, nessuno scaling aggiuntivo dell'aggiornamento), applicato sia ai proiettori di attention (\code{q/k/v/o\_proj}) sia ai proiettori del blocco feed-forward (\code{gate/up/down\_proj}): una scelta più estensiva rispetto a una LoRA limitata alla sola attention, che aumenta la capacità del modello di adattarsi al vocabolario specifico del dominio (predicati RDF, sintassi SPARQL) a fronte di un numero di parametri allenabili comunque contenuto grazie al rank ridotto.
+        LoRA congela i pesi originali del modello e affianca alle matrici bersaglio $W$ un aggiornamento di basso rango: $W' = W + \frac{\alpha}{r}BA$ (dove $B \in \mathbb{R}^{d \times r}$, $A \in \mathbb{R}^{r \times k}$, e $r \ll \min(d,k)$). Questo approccio rende il training eseguibile anche su hardware consumer, limitando l'aggiornamento alle sole matrici $A$ e $B$.\\
+        Nel nostro setup abbiamo impostato $r = 16 = \alpha$ e applicato l'aggiornamento sia ai proiettori di attention (\code{q/k/v/o\_proj}) sia a quelli feed-forward (\code{gate/up/down\_proj}). Rispetto all'applicazione standard (limitata all'attention), questa copertura più ampia facilita l'apprendimento del vocabolario di dominio, pur mantenendo contenuto il numero di parametri addestrabili.
 
 \subsubsection{Iperparametri utilizzati}\label{subsec:hyperparams}
 
@@ -387,14 +385,13 @@ trainer = SFTTrainer(
 % =============================================================================
 
 \subsection{Inference engine (FastAPI)}\label{subsec:fastapi}
-Il coordinamento delle richieste è affidato a un backend sviluppato in Python tramite FastAPI.\@
-L'inference engine è stato calibrato per garantire la consistenza del \textit{system prompt} a ogni invocazione, vincolando il modello a mantenere il ruolo di traduttore tecnico.
-È stata posta particolare attenzione alla corretta generazione del token EOS (\textit{End Of Sentence}), fondamentale per troncare l'output del modello ed evitare allucinazioni aggiuntive in coda alla query SPARQL.\@
+Il coordinamento delle richieste è affidato a un backend in Python basato su FastAPI.\@
+L'engine inietta in modo invisibile il \textit{system prompt} in ogni chiamata, costringendo il modello al ruolo di traduttore tecnico. Abbiamo dedicato particolare cura alla gestione del token EOS (\textit{End Of Sentence}), essenziale per troncare l'output e prevenire accodamenti di testo generato dopo la query SPARQL.\@
 
   \subsubsection{Caricamento del modello e fusione dell'adapter LoRA}
 
   \begin{sloppypar}
-  A differenza del notebook di training (dove il modello viene caricato tramite \code{FastLanguageModel} di Unsloth), il backend di inferenza carica il modello tramite le primitive standard di Hugging Face Transformers e PEFT, eseguendo il caricamento una sola volta all'avvio del server e non ad ogni richiesta, per evitare il costo proibitivo di ricaricare e fondere il modello a ogni chiamata:
+  Nel backend di inferenza, il modello viene istanziato tramite le librerie standard Hugging Face Transformers e PEFT.\@ Il caricamento avviene esclusivamente all'avvio del server, ammortizzando così il costo computazionale della lettura in memoria e della fusione dei pesi:
   \end{sloppypar}
 
   \begin{lstlisting}[language=python, caption=Caricamento e fusione dell'adapter LoRA all'avvio del server FastAPI]
@@ -469,12 +466,12 @@ async def generate_sparql(request: ChatRequest):
 
 \newpage
 
-Abbiamo tre aspetti di questa implementazione particolarmente significativi:
+Si notino tre scelte implementative in questo blocco:
 
 \begin{itemize}
-  \item \textbf{Doppio token di stop}: il modello Phi-3 utilizza il token speciale \code{<|end|>} per segnalare la fine di un turno di conversazione, distinto dal token EOS standard del tokenizer. Includere \emph{entrambi} in \code{terminators} si è rivelato necessario: in fase di sviluppo l'omissione del token \code{<|end|>} causava generazione continuata oltre la query attesa, lo stesso fenomeno di hallucination continuata osservato con \code{packing=True} in training.
-  \item \textbf{Generazione deterministica}: \code{do\_sample=False} disabilita il campionamento stocastico, rendendo la generazione completamente deterministica. Per un compito di traduzione verso un linguaggio formale come SPARQL, dove esiste tipicamente un'unica forma corretta attesa, è preferibile il determinismo.
-  \item \textbf{Limite di token generati}: \code{max\_new\_tokens=250} pone un tetto alla lunghezza della risposta generata, sufficiente per la forma di query vincolata dalla Regola 1 del system prompt (\cref{subsec:regole}), oltre a fungere da rete di sicurezza contro eventuali generazioni anomale che non si arrestino correttamente sui token di stop.
+  \item \textbf{Doppio token di stop}: Phi-3 impiega il token \code{<|end|>} per chiudere il turno di conversazione, oltre all'EOS standard. Omettere \code{<|end|>} nei \code{terminators} causava cicli di generazione inarrestabili.
+  \item \textbf{Generazione deterministica}: \code{do\_sample=False} disattiva il campionamento stocastico. Nel contesto della traduzione verso SPARQL, dove si insegue l'esattezza sintattica piuttosto che la varietà lessicale, l'output deterministico è strettamente necessario.
+  \item \textbf{Limite ai token generati}: \code{max\_new\_tokens=250} fornisce sufficiente capienza per query vincolate al template, fungendo anche da rete di salvataggio in caso di fallimento dei token di stop.
 \end{itemize}
 
 \subsubsection{Il sanitizzatore: parsing e validazione dell'output}
@@ -532,16 +529,14 @@ def sanitize_sparql_query(raw_output: str) -> str:
   return sanitized_query
 \end{lstlisting}
 
-L'algoritmo di sanitizzazione opera come un filtro di sicurezza a cascata, applicando tre livelli di validazione:
+Il sanitizzatore applica tre filtri di sicurezza a cascata:
 
 \begin{description}
-    \item[Short-circuit evaluation (Out-of-Domain):] Il primo controllo intercetta la presenza della stringa \code{OUT\_OF\_DOMAIN}.\\
-    Se individuata, la funzione si arresta restituendo il JSON formattato.\\
-    Questa scelta evita che l'engine tenti di fare il parsing di un messaggio di errore trattandolo come se fosse una stringa SPARQL.\@
+    \item[Short-circuit evaluation (Out-of-Domain):] Se il testo contiene \code{OUT\_OF\_DOMAIN}, la funzione si arresta e restituisce il JSON di errore. Ciò impedisce che il backend tenti di parsare l'errore come query SPARQL.\@
     
-    \item[Troncamento tramite Regex (\code{re.search}):] L'LLM, pur addestrato a restituire solo la clausola \code{SELECT}, in alcuni casi limite tendeva ad anticipare la risposta con blocchi \code{PREFIX} parzialmente corretti. L'espressione regolare cattura esclusivamente la stringa a partire dal pattern \code{SELECT DISTINCT}, scartando tutto il testo antecedente. Successivamente, il blocco \code{HARDCODED\_PREFIXES} provvede alla reiniezione dei namespace corretti.
+    \item[Troncamento (\code{re.search}):] Anche se addestrato a rispondere solo con la \code{SELECT}, occasionalmente il modello anticipava la query con blocchi \code{PREFIX}. La regex estrae solo dal pattern \code{SELECT DISTINCT} in poi, demandando al backend l'iniezione dei namespace corretti.
     
-    \item[Normalizzazione semantica tramite Regex (\code{re.sub}):] Nonostante la chiarezza della Regola 6 nel \textit{system prompt}, in rare occasioni il modello generava filtri temporali omettendo la conversione esplicita \code{STR(?date)}. Dato che i dati in Blazegraph richiedono un confronto lessicale puro su stringhe non standard, l'omissione di questo cast produceva una query formalmente valida ma vuota. L'espressione regolare applica una correzione tipografica ``al volo'', incapsulando dinamicamente la variabile temporale nel costrutto \code{STR()} nel caso in cui fosse assente. % chktex 36
+    \item[Normalizzazione semantica (\code{re.sub}):] In rari casi il modello ometteva la conversione esplicita \code{STR(?date)} richiesta dalla Regola 6. Avendo Blazegraph bisogno di confronti testuali puri, l'omissione produceva query valide ma senza risultati. La regex rileva la dimenticanza e ripristina il cast \code{STR()} dove necessario. % chktex 36
 \end{description}
 
 % =============================================================================
@@ -631,6 +626,6 @@ Per riassumere, la tabella seguente elenca il comportamento del sistema nei prin
 \section{Conclusioni del capitolo}\label{sec:conclusioni_cap4}
 % =============================================================================
 
-Le scelte architetturali descritte in questo capitolo: dallo stack tecnologico basato su Fedora e Blazegraph, alla pipeline di fine-tuning con Unsloth e LoRA, fino all'implementazione del backend FastAPI e al raffinamento del dataset per gestire correttamente prefissi e casi limite; dimostrano come la transizione da un proof-of-concept teorico a uno strumento funzionante richieda un'attenta ingegnerizzazione del dato e del software.
+Lo sviluppo discusso in questo capitolo mostra come la conversione di un'idea teorica in uno strumento utilizzabile dipenda dall'ingegnerizzazione dei componenti. La cura del dataset, la gestione dei namespace e l'architettura dei layer applicativi sono requisiti essenziali, non dettagli.
 
-Nel \cref{chap:valutazione} esamineremo come questa architettura si comporta concretamente in fase di test quantitativo e qualitativo, incluso l'impatto del bug del namespace EXIF sulle metriche di precision e recall.
+Il prossimo capitolo metterà alla prova l'intero sistema, valutandone l'efficacia sul campo.

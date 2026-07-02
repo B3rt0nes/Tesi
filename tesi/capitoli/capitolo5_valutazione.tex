@@ -1,10 +1,10 @@
 \chapter{Valutazione}\label{chap:valutazione}
 
-Nel \cref{chap:implementazione} abbiamo descritto come il sistema sia stato costruito; andremo adesso a valutarne il comportamento. Distinguiamo due piani di analisi: l'\textbf{efficienza} (\cref{sec:efficienza}), ovvero le prestazioni quantitative misurabili (tempo di generazione, tasso di esecuzione corretta, convergenza del training) e l'\textbf{efficacia} (\cref{sec:efficacia}), ovvero il miglioramento qualitativo apportato dal sistema rispetto alle soluzioni precedenti (funzionalità, usabilità e flessibilità).
+Dopo aver descritto la costruzione del sistema nel \cref{chap:implementazione}, in questo capitolo ne valutiamo il comportamento. L'analisi si articola su due piani: l'\textbf{efficienza} (\cref{sec:efficienza}), misurata tramite metriche quantitative (tempi di generazione, tassi di esecuzione, convergenza), e l'\textbf{efficacia} (\cref{sec:efficacia}), che riflette il salto qualitativo rispetto alle pratiche precedenti (funzionalità, usabilità, integrazione).
 
-\subsection{Metodologia generale}\label{subsec:metodologia}
+\section{Metodologia generale}\label{sec:metodologia}
 
-La valutazione quantitativa è stata condotta secondo una pipeline a due fasi, eseguite su macchine diverse per ragioni di disponibilità hardware:
+La valutazione quantitativa si sviluppa in due fasi, eseguite su macchine distinte per ottimizzare le risorse hardware disponibili:
 
 
 \begin{enumerate}
@@ -48,7 +48,7 @@ I parametri di esecuzione del test sono i seguenti:
 
 Il test set estratto copre 7 delle 14 categorie di query definite nel generatore (\cref{subsec:dataset_gen}). Come visibile in \cref{tab:distribuzione_test} e \cref{fig:category_distribution}, la distribuzione non è uniforme: la categoria \code{data\_esatta} da sola costituisce quasi la metà del campione (233/500, 46.6\%), mentre alcune categorie di nicchia (es.\@ \code{query\_not\_anno}) non risultano rappresentate. 
 
-Questo sbilanciamento va tenuto presente nell'interpretazione dei risultati: le metriche aggregate sono più informative se lette per categoria (\cref{subsec:metriche_categoria}) che come media generale.
+Questa distribuzione irregolare influenza l'interpretazione dei risultati: per questo motivo, nel \cref{subsec:metriche_categoria} le metriche verranno analizzate per singola categoria piuttosto che come media aggregata.
 
 \begin{table}[htbp]
     \centering
@@ -241,13 +241,13 @@ La distribuzione è concentrata tra i 7 e i 9 secondi per la maggioranza delle q
 
 \subsection{Tasso di esecuzione corretta}\label{subsec:tasso_esecuzione}
 
-Su tutti i 443 esempi non Out-of-Domain del test set, il \textbf{100\% delle query generate è stato eseguito con successo} contro l'endpoint Blazegraph reale, senza errori di sintassi o di esecuzione (\code{execution\_ok = True} per tutte le righe, nessun \code{exec\_error} registrato). Questo risultato conferma, a livello sintattico, l'efficacia delle 8 regole imposte tramite il system prompt (\cref{subsec:regole}) nel vincolare il modello a generare sempre query ben formate.
+Su tutti i 443 esempi non Out-of-Domain del test set, il \textbf{100\% delle query generate è stato eseguito con successo} contro l'endpoint Blazegraph reale, senza errori di sintassi o di esecuzione (\code{execution\_ok = True} per tutte le righe, nessun \code{exec\_error} registrato). Questo dato conferma la validità del system prompt (\cref{subsec:regole}): il modello rispetta rigidamente le regole sintattiche, generando esclusivamente query ben formate.
 
 \subsubsection{Nessun impatto misurato del bug del namespace EXIF}
 
 Il \cref{chap:implementazione} aveva anticipato che l'impatto del namespace EXIF malformato (\cref{subsec:bug_exif_namespace}) sulle metriche di valutazione sarebbe stato verificato in questo capitolo. Il dato è chiaro: \textbf{nessun impatto negativo è stato osservato}. Su 293 dei 443 esempi non Out-of-Domain (categorie \code{data\_esatta}, \code{data\_intervallo} e \code{dispositivo}), la query di riferimento utilizza effettivamente un predicato \code{exif:} nel corpo del \code{WHERE}, non solo nella dichiarazione dei prefissi; tutti e 293 sono stati eseguiti correttamente, con precision e recall pari a 1.000 (\cref{tab:metriche_categoria}).
 
-Questo esito era atteso, ed è la conferma diretta che la strategia di mitigazione descritta nel \cref{chap:implementazione} funziona come previsto: allineando sia il dataset di training sia il backend allo stesso namespace malformato realmente presente in Blazegraph, il sistema evita di generare query che userebbero il namespace standard corretto (\code{www.w3.org}) e fallirebbero sistematicamente. Il bug, di per sé, avrebbe azzerato precision e recall su quasi i due terzi del test set se non fosse stato gestito; il fatto che qui non produca alcun effetto misurabile è merito della scelta di allineamento e non dell'assenza del problema, che resta presente nei dati di produzione e nella fragilità architetturale discussa nel \cref{chap:conclusioni}.
+L'esito attesta il successo della strategia di mitigazione introdotta nel \cref{chap:implementazione}. Avendo allineato il dataset e il backend al namespace malformato di Blazegraph, il sistema non cade nell'errore di usare il prefisso standard (\code{www.w3.org}), che farebbe fallire la query. Se ignorato, il bug avrebbe annullato \textit{precision} e \textit{recall} su quasi due terzi del test set; l'assenza di un calo prestazionale dimostra l'efficacia del workaround, ma il problema originario persiste nei dati di produzione (una criticità architetturale ripresa nel \cref{chap:conclusioni}).
 
 \subsection{Convergenza del training}\label{subsec:convergenza}
 
@@ -255,11 +255,48 @@ Il log di training (\cref{subsec:hyperparams}) mostra una rapida convergenza del
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{img/loss_curve.png}
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.85\textwidth,
+    height=8cm,
+    xlabel={Step},
+    ylabel={Loss},
+    grid=major,
+    legend pos=north east,
+    xmin=0, xmax=1200,
+    ymin=0, ymax=0.05,
+    xtick={0, 200, 400, 600, 800, 1000, 1200},
+    ytick={0, 0.01, 0.02, 0.03, 0.04, 0.05},
+    scaled y ticks=false,
+    yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=2
+    },
+    tick label style={font=\footnotesize},
+    label style={font=\small},
+    legend style={font=\footnotesize}
+]
+
+\addplot [
+    color=blue,
+    mark=*,
+    mark size=1pt,
+] table [col sep=comma, x=step, y=loss] {../../DataVault/llm-backend/LLM evaluation/training_log.csv};
+\addlegendentry{Training Loss}
+
+\addplot [
+    color=red,
+    mark=square*,
+    mark size=1pt,
+] table [col sep=comma, x=step, y=eval_loss] {../../DataVault/llm-backend/LLM evaluation/training_log.csv};
+\addlegendentry{Validation Loss}
+
+\end{axis}
+\end{tikzpicture}
 \caption{Andamento della training loss e della validation loss durante il fine-tuning}\label{fig:loss_curve}
 \end{figure}
 
-La curva di \textit{validation loss} segue da vicino quella di training, senza divergenze significative: segno di assenza di overfitting. Entrambe le curve si stabilizzano già intorno allo step 400 su un totale di 1188, il che suggerisce che il modello avrebbe potuto convergere anche con meno step.
+La curva di \textit{validation loss} aderisce a quella di training, escludendo fenomeni di overfitting. Entrambe si stabilizzano intorno allo step 400 su 1188, indicando che il modello avrebbe raggiunto la convergenza anche con un addestramento più breve.
 
 \newpage
 % =============================================================================
@@ -294,11 +331,11 @@ Anche il riconoscimento delle richieste Out-of-Domain (\cref{subsec:errori}) rag
 
 \subsection{Nota critica: interpretazione dei risultati perfetti}\label{subsec:nota_critica}
 
-I risultati riportati in \cref{tab:metriche_categoria} meritano una discussione esplicita, poiché un punteggio di 1.000 uniforme su ogni metrica e ogni categoria è un esito che richiede cautela interpretativa più che entusiasmo acritico.
+I risultati perfetti riportati in \cref{tab:metriche_categoria} (punteggio 1.000 su ogni fronte) richiedono un'interpretazione analitica.
 
-Un'ispezione diretta delle 500 coppie (query generata, query di riferimento) in \code{predictions.json} rivela che \textbf{tutte le 500 query generate dal modello sono identiche, carattere per carattere, alla rispettiva query di riferimento}. Questo è un dato di fatto distinto, e più forte, della semplice equivalenza semantica dei risultati: non si tratta di formulazioni sintatticamente diverse che producono lo stesso insieme di risultati, ma di una riproduzione esatta della stringa SPARQL attesa.
+Ispezionando il file \code{predictions.json}, emerge che \textbf{le 500 query generate coincidono, carattere per carattere, con le query di riferimento}. Non assistiamo semplicemente a un'equivalenza semantica dei risultati, ma all'esatta riproduzione della stringa SPARQL attesa.
 
-Questo fenomeno è spiegabile alla luce di come il test set è stato costruito: le domande e le query di riferimento sono generate dallo stesso sistema di template parametrici (\cref{subsec:dataset_gen}) usato per produrre il dataset di training. Le 8 regole assolute del system prompt (\cref{subsec:regole}) vincolano fortemente la forma sintattica della query attesa: un'unica struttura \code{SELECT DISTINCT ?image WHERE \{\ldots\}}, predicati fissi per ciascun intento, che riduce lo spazio delle risposte plausibili a un insieme ristretto e, per costruzione, deterministico dato l'intento e i parametri della domanda.
+Questo comportamento deriva dalla genesi del test set: essendo prodotto dagli stessi template parametrici (\cref{subsec:dataset_gen}) usati per il training, ne eredita la rigidità strutturale. Le regole del system prompt (\cref{subsec:regole}) restringono drasticamente lo spazio delle query valide, imponendo predicati e costrutti fissi. Di conseguenza, a parità di intento informazionale, la traduzione diventa sostanzialmente deterministica.
 
 In altre parole, una corrispondenza esatta al 100\% è coerente con due ipotesi non mutuamente esclusive:
 
@@ -309,47 +346,37 @@ In altre parole, una corrispondenza esatta al 100\% è coerente con due ipotesi 
 
 Il codice di inferenza (\code{generate\_predictions.ipynb}) conferma che il test set costituisce una reale partizione \textit{held-out}: l'estrazione è avvenuta in modo deterministico con un rapporto 95\%/5\% e lo stesso seed (\code{3407}) usato per la configurazione del training. Questo esclude \textit{data leakage} o sovrapposizioni (il modello ha elaborato istanze mai viste in fase di addestramento) e avvalora l'ipotesi della generalizzazione strutturale (punto 1), pur confermando che tale generalizzazione avviene strettamente \textit{in-distribution} rispetto ai template.
 
-Questa osservazione non invalida il risultato: un'accuratezza sintattica ed esecutiva del 100\% sui formati di query coperti dal generatore resta un traguardo solido e utile per l'applicativo. Ne delimita però la portata: la valutazione quantitativa qui presentata misura principalmente la capacità del modello di rispettare in modo affidabile e ripetibile la grammatica e le regole imposte dal system prompt, più che la sua capacità di decodificare formulazioni libere e impreviste di un ricercatore umano. Manca ancora una prova con domande poste in modo spontaneo da utenti reali, non vincolate dai template del generatore (\cref{chap:conclusioni}).
+Ciò non toglie valore al traguardo raggiunto: l'accuratezza del 100\% garantisce un'operatività robusta per l'applicativo. Tuttavia, ne ridimensiona la portata: questa valutazione certifica la disciplina del modello nell'applicare la grammatica del system prompt, ma non la sua capacità di interpretare formulazioni del tutto slegate dai pattern di addestramento. Una prova empirica con ricercatori umani, liberi di porre le proprie domande senza vincoli a priori, rimane un tassello mancante (\cref{chap:conclusioni}).
 
 \subsection{Miglioramento rispetto alle soluzioni precedenti}\label{subsec:miglioramento}
 
-Al di là delle metriche quantitative, l'efficacia del sistema si misura anche rispetto al miglioramento qualitativo delle funzionalità disponibili per il ricercatore umanista, in continuità con la discussione del \cref{chap:contesto} (architettura dell'informazione, berrypicking, carico cognitivo):
+Oltre alle metriche quantitative, l'efficacia si valuta sull'impatto pratico per i ricercatori, risolvendo le barriere esaminate nel \cref{chap:contesto}:
 
 \begin{sloppypar}
 \begin{itemize}
-    \item \textbf{Funzionalità}: prima dell'introduzione del sistema, non esisteva alcun meccanismo di ricerca per contenuto o concetto sul Datavault; l'unica modalità di accesso era la navigazione diretta della struttura a container (\cref{subsec:dharc}). Il sistema introduce ex novo questa funzionalità.
-    \item \textbf{Usabilità}: l'interazione è ridotta a un singolo campo di testo in linguaggio naturale, eliminando la necessità di conoscere prefissi RDF, sintassi SPARQL o la struttura interna dello schema (\cref{subsec:tre_barriere}).
-    \item \textbf{Integrazione}: il sistema si integra nell'infrastruttura esistente (Fedora/Blazegraph) senza richiedere modifiche allo schema dati o migrazioni, operando come layer applicativo aggiuntivo.
-    \item \textbf{Manutenzione}: la separazione netta tra dataset di training, system prompt e backend di inferenza (\cref{chap:implementazione}) consente di aggiornare il comportamento del sistema (ad esempio aggiungendo nuove categorie di query) senza dover intervenire sull'infrastruttura dati sottostante.
+    \item \textbf{Funzionalità}: colma l'assenza di un motore di ricerca semantico sul Datavault, affiancando la ricerca per contenuto alla preesistente navigazione per cartelle (\cref{subsec:dharc}).
+    \item \textbf{Usabilità}: la barra di ricerca testuale astrae completamente i concetti di triplestore, prefissi RDF e sintassi SPARQL, rendendo accessibile il patrimonio informativo a utenti non tecnici (\cref{subsec:tre_barriere}).
+    \item \textbf{Integrazione}: opera come layer aggiuntivo, inserendosi nello stack Fedora/Blazegraph senza richiedere alterazioni dello schema o migrazioni di dati.
+    \item \textbf{Manutenzione}: l'architettura modulare (dataset sintetico, prompt, backend isolato) permette di espandere le categorie di query o aggiornare la logica senza impattare il database sottostante.
 \end{itemize}
 \end{sloppypar}
 
-\subsubsection{Limite: nessun confronto diretto con l'alternativa manuale}
+\subsubsection{Nessun confronto diretto con l'alternativa manuale}
 
-I quattro punti sopra restano un confronto qualitativo basato sull'analisi architetturale del sistema, non su una misura empirica diretta. Non è stato condotto né un cronometraggio del tempo necessario a un utente per scrivere manualmente le query SPARQL dei tre casi d'uso del \cref{chap:prototipo}, né un test di usabilità con ricercatori reali del dominio DH.ARC.\@
+L'analisi appena presentata è prettamente architetturale: manca una validazione empirica. Non abbiamo cronometrato la scrittura manuale delle query SPARQL per i casi d'uso del \cref{chap:prototipo}, né abbiamo sottoposto il sistema a un campione di veri utenti DH.ARC.\@
 
-Un'indicazione indiretta della differenza attesa viene dalla complessità sintattica stessa dei casi d'uso discussi nel \cref{chap:prototipo}: query come quella del caso d'uso 3 (filtro multi-criterio su dispositivo, intervallo di date e formato) richiedono la conoscenza di almeno tre predicati RDF diversi (\code{exif:make}, \code{exif:dateTime}, \code{ebucore:hasMimeType}) e la sintassi corretta per combinarli in un unico \code{WHERE}, competenze che il profilo utente descritto nel \cref{subsec:utenti} tipicamente non possiede. Questo suggerisce che il vantaggio in termini di tempo e di soglia d'accesso sia sostanziale, ma resta appunto un'aspettativa qualitativa e non un dato misurato.
-
-Colmare questa lacuna con un vero studio comparativo (a tempo, o con un gruppo di utenti reali) è indicato come sviluppo futuro nel \cref{chap:conclusioni}.
+L'onere sintattico dei casi d'uso (che richiedono l'uso combinato di predicati come \code{exif:make}, \code{exif:dateTime} ed \code{ebucore:hasMimeType} in una singola clausola \code{WHERE}) suggerisce un netto risparmio di tempo e di frustrazione rispetto all'alternativa manuale, in particolare per un'utenza umanistica. Tale beneficio, per ora presunto e supportato dalla teoria del carico cognitivo, dovrà essere quantificato empiricamente. Questo limite metodologico troverà spazio tra gli sviluppi futuri (\cref{chap:conclusioni}).
 
 % =============================================================================
 \section{Discussione dei risultati e limiti della valutazione}\label{sec:discussione}
 % =============================================================================
 
-I risultati di questo capitolo si riassumono in tre punti:
+I dati raccolti offrono un quadro chiaro sulle prestazioni:
 
 \begin{enumerate}
-    \item Il sistema è \textbf{sintatticamente affidabile}: il 100\% delle query generate nel test set è eseguibile senza errori contro Blazegraph, grazie al vincolo imposto dalle 8 regole del system prompt.
-    \item Il sistema è \textbf{efficiente nei tempi di risposta}: una media di 7.45 secondi per query su GPU T4 è compatibile con un'interazione conversazionale, sebbene il confronto con un'esecuzione su CPU richieda ulteriore verifica empirica (\cref{subsec:tempo_generazione}).
-    \item I punteggi di precision/recall/F1 pari a 1.000 vanno interpretati con cautela metodologica (\cref{subsec:nota_critica}): riflettono primariamente la capacità del modello di rispettare un formato di query fortemente vincolato e generato dalla stessa famiglia di template del training set, più che una misura di generalizzazione su domande realmente libere.
+    \item \textbf{Solidità sintattica}: il vincolo del system prompt (\cref{subsec:regole}) garantisce un tasso di esecuzione privo di errori contro Blazegraph.
+    \item \textbf{Tempi di risposta adeguati}: l'elaborazione media di 7.45 secondi su GPU T4 risulta compatibile con un uso esplorativo. Le misurazioni dovranno tuttavia essere estese all'effettivo deployment su CPU (\cref{subsec:tempo_generazione}).
+    \item \textbf{Metriche apparentemente perfette}: precisione, recall e F1 a quota 1.000 misurano l'efficacia del modello nel replicare costrutti generati dai template (\cref{subsec:nota_critica}), senza per questo attestare un'analoga robustezza nell'interpretazione di input utente destrutturati.
 \end{enumerate}
 
-Il limite principale di questa valutazione è dunque la natura \textbf{sintetica e in-dominio} del test set utilizzato. Una valutazione più conclusiva richiederebbe un confronto con domande poste da utenti reali del dominio DH.ARC, non vincolate dalla struttura dei template di generazione: un'estensione discussa come sviluppo futuro nel \cref{chap:conclusioni}.
-
-% =============================================================================
-\section{Conclusioni del capitolo}\label{sec:conclusioni_cap5}
-% =============================================================================
-
-In questo capitolo abbiamo valutato il sistema lungo due assi complementari. Sul piano dell'\textbf{efficienza}, il sistema mostra tempi di generazione contenuti (media 7.45s su GPU), un tasso di esecuzione corretta del 100\% e una rapida convergenza in fase di training (loss stabilizzata già a circa un terzo del training totale). Sul piano dell'\textbf{efficacia}, le metriche di retrieval (precision, recall, F1) raggiungono il valore massimo su tutte le categorie testate: un risultato che, come discusso in \cref{subsec:nota_critica}, va attribuito principalmente all'efficacia delle regole di vincolo sintattico imposte dal system prompt e alla natura in-distribuzione del test set, più che a una dimostrata capacità di generalizzazione su input completamente liberi.
-
-Il \cref{chap:conclusioni} riprende questi risultati per bilanciare i punti di forza del sistema con i suoi limiti noti, e per delineare gli sviluppi futuri necessari a una valutazione più rigorosa e a un utilizzo in produzione del sistema.
+La natura sintetica del test set rappresenta dunque la principale vulnerabilità dell'analisi. Per saggiare la reale elasticità dell'assistente occorrerà raccogliere una base dati organica, derivante dall'interazione spontanea dei ricercatori del centro (\cref{chap:conclusioni}).

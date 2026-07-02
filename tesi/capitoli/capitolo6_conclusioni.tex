@@ -1,7 +1,7 @@
 \chapter{Conclusioni e sviluppi futuri}\label{chap:conclusioni}
 
-I capitoli precedenti hanno definito il problema (\cref{chap:contesto}), presentato la soluzione (\cref{chap:prototipo}), descritto la sua realizzazione tecnica (\cref{chap:implementazione}) e misurato il suo comportamento (\cref{chap:valutazione}). Questo capitolo chiude il lavoro con un bilancio onesto: cosa il sistema realizza bene, dove restano margini di miglioramento, e perché rappresenti comunque un passo avanti rispetto alla situazione di partenza descritta nel \cref{chap:contesto}, ovvero l'sassenza totale di ricerca per contenuto o concetto sul Datavault.
-Chiudiamo delineando gli sviluppi futuri, ordinati per priorità: dai bug fix più urgenti fino alle estensioni più ambiziose.
+Questo capitolo tira le fila del progetto, tracciando un bilancio: cosa il sistema realizza in modo affidabile, dove mostra il fianco, e perché rappresenti comunque un passo avanti rispetto all'assenza di un motore di ricerca semantico per il Datavault.
+La sezione finale organizza gli sviluppi futuri per priorità: dai correttivi immediati fino alle esplorazioni più ambiziose.
 
 % =============================================================================
 \section{Analisi critica del sistema}\label{sec:orgoglio_modestia}
@@ -11,11 +11,11 @@ Chiudiamo delineando gli sviluppi futuri, ordinati per priorità: dai bug fix pi
 
 \subsubsection{Affidabilità sintattica}
 
-Il risultato più solido del sistema è il tasso di esecuzione corretta del 100\% osservato sul test set held-out (\cref{subsec:tasso_esecuzione}): ogni query generata nel campione di valutazione è risultata eseguibile senza errori contro Blazegraph. Questo non è un dato scontato per un sistema basato su generazione di linguaggio: dimostra che il vincolo imposto dalle 8 regole assolute del system prompt (\cref{subsec:regole}), combinato con il fine-tuning su un dataset coerente con quelle stesse regole, produce un comportamento affidabile e ripetibile.
+Il dato più solido è il tasso di esecuzione corretta del 100\% sul test set held-out (\cref{subsec:tasso_esecuzione}): ogni query generata è risultata eseguibile senza errori su Blazegraph. Per un sistema basato su intelligenza artificiale generativa, in cui l'esattezza sintattica non è scontata, l'assenza di errori testimonia che l'abbinamento tra system prompt (\cref{subsec:regole}) e dataset di fine-tuning produce un comportamento prevedibile.
 
 \subsubsection{Uno split di valutazione genuinamente held-out}
 
-A differenza di molte valutazioni superficiali di sistemi basati su LLM, in questo lavoro è stato verificato esplicitamente, risalendo al codice di generazione delle predizioni (\cref{subsec:nota_critica}), che il test set non si sovrappone al training set. I 500 esempi valutati non sono mai stati osservati dal modello durante l'addestramento. Questo rigore metodologico, per quanto abbia comunque richiesto una discussione critica sulla natura in-distribuzione del test (\cref{subsec:nota_critica}), è di per sé un punto di forza: molti sistemi analoghi non documentano affatto come è stato costruito il proprio set di valutazione.
+Abbiamo verificato esplicitamente (\cref{subsec:nota_critica}) che il test set non si sovrapponesse ai dati di training: i 500 esempi usati per la validazione non sono mai stati osservati dal modello in fase di addestramento. Pur consapevoli della natura \textit{in-distribution} dei dati valutati, la trasparenza sulla partizione dei dati distingue l'analisi da approcci meno rigorosi.
 
 % \subsubsection{Gestione esplicita e documentata di un bug di produzione}
 
@@ -23,17 +23,17 @@ A differenza di molte valutazioni superficiali di sistemi basati su LLM, in ques
 
 \subsubsection{Economicità delle risorse impiegate}
 
-L'intera pipeline di addestramento (generazione del dataset sintetico, fine-tuning con LoRA, valutazione) è stata condotta con risorse gratuite (GPU T4 di Kaggle) e un modello di dimensioni contenute (Phi-3-mini, 3.8 miliardi di parametri). Il fine-tuning ha richiesto meno di 1200 step per raggiungere una loss stabile (\cref{subsec:convergenza}). Questo dimostra che un problema di dominio specifico e ben delimitato, come la traduzione da linguaggio naturale a una sintassi SPARQL vincolata, non richiede necessariamente modelli di grandi dimensioni o infrastrutture costose per essere affrontato efficacemente.
+L'intera pipeline di addestramento è stata condotta impiegando hardware accessibile (GPU T4 di Kaggle) e un modello di base leggero (Phi-3-mini, 3.8 miliardi di parametri). Il fine-tuning si è stabilizzato in meno di 1200 step (\cref{subsec:convergenza}). Il risultato dimostra come, delimitando il perimetro a una sintassi vincolata, un task di traduzione testo-a-codice sia affrontabile senza ricorrere ad architetture dispendiose.
 
 \subsubsection{Coerenza architetturale tra training e inferenza}
 
-Il system prompt è identico, byte per byte, sia nel generatore del dataset sia nel backend di inferenza (\cref{subsec:regole}). Questa scelta, apparentemente minore, elimina una classe di errori comune nei sistemi basati su fine-tuning: il disallineamento tra le condizioni di addestramento e quelle di utilizzo reale (\textit{train-serve skew}).
+Il system prompt usato per generare il dataset è lo stesso, riga per riga, inserito nel backend di inferenza (\cref{subsec:regole}). Questa identità scongiura una criticità diffusa: il \textit{train-serve skew}, ovvero il disallineamento tra i prompt visti dal modello in addestramento e quelli inviati in produzione.
 
 \subsection{Limiti del sistema e criticità}\label{subsec:punti_modestia}
 
 \subsubsection{Limiti della valutazione rispetto agli scenari d'uso reale}
 
-Il limite più rilevante, discusso ampiamente nel \cref{subsec:nota_critica}, è che la valutazione quantitativa misura la capacità del modello di rispettare un formato di query generato dagli stessi template usati in training, non la sua capacità di gestire domande realmente libere, poste da un umanista che non conosce né le regole del sistema né le 13 categorie di query supportate (\cref{subsec:dataset_gen}). Nessun utente reale del dominio DH.ARC ha ancora interagito con il sistema in condizioni non controllate.
+Come discusso nel \cref{subsec:nota_critica}, la valutazione quantitativa fotografa l'accuratezza del modello su formati già visti in training. Non sappiamo se l'assistente si dimostrerà altrettanto abile nell'interpretare domande spontanee da parte di ricercatori estranei alle 13 categorie (\cref{subsec:dataset_gen}). Manca all'appello un vero stress test: l'interazione sul campo con utenti DH.ARC.\@
 
 \subsubsection{Copertura parziale delle categorie nel test set}
 
@@ -53,7 +53,7 @@ Il limite di 1024 token in \code{max\_seq\_length} (\cref{subsec:hyperparams}), 
 
 \subsection{Impatto e prospettive nel dominio umanistico}\label{subsec:giustificazione}
 
-Rispetto alla situazione precedente, ovvero l'assenza di un meccanismo di ricerca per contenuto sul Datavault, con l'unica alternativa realistica rappresentata dalla scrittura manuale di SPARQL da parte di utenti privi delle competenze necessarie (\cref{subsec:tre_barriere}), il sistema sposta il problema da ``impossibile per l'utente target'' a ``possibile, con margini di miglioramento noti e documentati''. Non è una soluzione perfetta, ma è una soluzione \emph{funzionante} su un problema che, prima di questo lavoro, non aveva alcuna soluzione praticabile per un ricercatore umanista senza competenze SPARQL.\@
+Rispetto allo scenario precedente, in cui l'esplorazione del Datavault richiedeva obbligatoriamente la scrittura manuale di SPARQL (\cref{subsec:tre_barriere}), l'interfaccia realizzata trasforma un'operazione preclusa agli umanisti in un'attività fluida. Pur coi suoi limiti, il tool offre una soluzione percorribile a un problema finora irrisolto.
 
 % Il punto qualificante non è l'assenza di errori nella valutazione fin qui condotta (come discusso in \cref{subsec:nota_critica}, quella valutazione ha una portata limitata), ma la trasparenza con cui i limiti sono stati identificati e documentati. Un sistema che dichiara i propri confini con questo livello di dettaglio è più utile, e più onesto, di uno che sbandiera performance non qualificate metodologicamente.
 
@@ -66,7 +66,7 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
 \subsection{Bug fix}\label{subsec:bugfix}
 
 \begin{enumerate}
-    \item \textbf{Estendere la valutazione alle categorie mancanti}: eseguire la Fase 1/Fase 2 della pipeline di valutazione (\cref{subsec:metodologia}) su un campione che includa esplicitamente le categorie non rappresentate nel test set attuale (negazione, OR tra formati, paginazione custom, ricerca per uploader), per verificare se il tasso di esecuzione corretta del 100\% si mantiene anche lì.
+    \item \textbf{Estendere la valutazione alle categorie mancanti}: eseguire la Fase 1/Fase 2 della pipeline di valutazione (\cref{sec:metodologia}) su un campione che includa esplicitamente le categorie non rappresentate nel test set attuale (negazione, OR tra formati, paginazione custom, ricerca per uploader), per verificare se il tasso di esecuzione corretta del 100\% si mantiene anche lì.
     \item \textbf{Rendere il namespace EXIF configurabile}: estrarre il namespace hardcoded (\cref{subsec:bug_exif_namespace}) in un parametro di configurazione centralizzato, così che un'eventuale correzione futura del Datavault richieda una modifica in un solo punto anziché in due file separati.
     \item \textbf{Misurare i tempi di inferenza reali su CPU}: eseguire un benchmark diretto sul backend di produzione, sostituendo la stima qualitativa attuale (\cref{subsec:tempo_generazione}) con un dato misurato.
 \end{enumerate}
@@ -96,11 +96,11 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
 \end{enumerate}
 
 % =============================================================================
-\section{Conclusioni finali}\label{sec:conclusioni_finali}
+\section{In sintesi}\label{sec:conclusioni_finali}
 % =============================================================================
 
-Questo lavoro nasce da un'osservazione semplice: il Datavault di DH.ARC contiene milioni di triple RDF, ma nessun modo agile per ricercatori umanisti di interrogarle se non conoscendo SPARQL.\@ Abbiamo affrontato questo problema costruendo un Quenya Query Builder che traduce domande in linguaggio naturale italiano in query SPARQL valide, attraverso il fine-tuning di un modello di dimensioni contenute su un dataset sintetico costruito appositamente per il dominio.
+Il Datavault di DH.ARC contiene milioni di triple RDF, ma finora non offriva un'esplorazione agnostica a SPARQL.\@ Quenya traduce domande in linguaggio naturale in interrogazioni valide, operando tramite un modello linguistico compatto affinato appositamente per questo archivio.
 
-I risultati raccolti nel \cref{chap:valutazione} mostrano un sistema sintatticamente affidabile, efficiente nei tempi di generazione e coerente nella sua architettura tra fase di training e fase di inferenza. Allo stesso tempo, la discussione onesta dei suoi limiti (una valutazione ancora in-distribuzione, l'assenza di un test con utenti reali, la fragilità nota rispetto ai dati di produzione) delimita la portata di quanto qui dimostrato, senza sminuire il fatto che Datavault dispone di un meccanismo di ricerca per contenuto praticabile da chi non conosce SPARQL.\@
+La valutazione ha restituito parametri eccellenti sul piano della sintassi, dell'efficienza temporale e della stabilità. Tuttavia, la consapevolezza dei limiti empirici impone di leggere l'applicativo per quello che è: un prototipo funzionale che risolve una carenza strutturale preesistente. 
 
-Gli sviluppi futuri delineati in questo capitolo, dalla verifica delle categorie non ancora testate fino alla visione più ambiziosa di una ricerca per contenuto visivo, tracciano un percorso che potrebbe portare ad un significativo miglioramento in termini di efficacia e usabilità del sistema.
+Gli sviluppi teorizzati, dalla calibrazione del sistema tramite feedback sul campo all'integrazione di motori di intelligenza artificiale per l'elaborazione delle immagini, tracciano un cammino evolutivo chiaro. Seguendolo, l'interfaccia potrà stabilizzarsi come strumento indispensabile per l'esplorazione autonoma del patrimonio documentale.

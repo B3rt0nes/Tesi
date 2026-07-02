@@ -180,6 +180,8 @@
             pdfsubject={Tesi di Laurea},
             pdfkeywords={parola1, parola2, parola3}]{hyperref}
 \usepackage{cleveref}
+\usepackage{bookmark} % Risolve l'avviso e ottimizza i segnalibri
+
 
 \crefname{section}{paragrafo}{paragrafi}
 \crefname{chapter}{capitolo}{capitoli}
@@ -344,13 +346,13 @@
 
 \newpage~\newpage
 \chapter*{Abstract}\label{chap:abstract}
-L'interrogazione di database RDF solitamente richiede competenze tecniche avanzate, in particolare la padronanza del linguaggio formale SPARQL.\@ In ambito umanistico questa barriera può ostacolare i ricercatori nell'esplorazione e nella valorizzazione del patrimonio informativo. 
+L'interrogazione dei database RDF richiede abitualmente competenze tecniche specialistiche, prima fra tutte la padronanza del linguaggio formale SPARQL.\@ Per i ricercatori in ambito umanistico, questa barriera rappresenta spesso un ostacolo nell'esplorazione del patrimonio informativo.
 
-Questa dissertazione presenta la progettazione, lo sviluppo e la valutazione di ``Quenya'', un sistema intelligente integrato nel Datavault del centro di ricerca DH.ARC, progettato specificamente per risolvere questa problematica. Il Datavault ospita circa 19 milioni di triple RDF, un volume che rende la ricerca esplorativa complessa per la sua utenza comune. Il sistema proposto traduce interrogazioni espresse in linguaggio naturale in query SPARQL eseguibili, colmando il divario tra l'intento informativo dell'utente e la rigidità strutturale del grafo semantico.
+Questa tesi documenta lo sviluppo di ``Quenya'', un'interfaccia intelligente costruita per il Datavault del centro di ricerca DH.ARC.\@ Il repository ospita circa 19 milioni di triple RDF, un volume di dati difficilmente navigabile senza strumenti tecnici. Il sistema sviluppato traduce domande in linguaggio naturale direttamente in query SPARQL eseguibili, aggirando la rigidità strutturale del database a grafo.
 
-Metodologicamente, il lavoro supera i limiti delle tradizionali soluzioni Text-to-SPARQL combinando il fine-tuning di modelli linguistici compatti tramite adattatori LoRA con un approccio ispirato alla Retrieval-Augmented Generation (RAG). Questa architettura vincola il processo generativo allo schema ontologico reale del repository, minimizzando il rischio di allucinazioni sintattiche o strutturali. L'infrastruttura software si avvale di un'interfaccia utente conversazionale, concepita per minimizzare il carico cognitivo, supportata da un backend difensivo che gestisce la traduzione e interroga direttamente l'endpoint Blazegraph.
+A livello metodologico, il progetto implementa il fine-tuning di un modello linguistico compatto (attraverso l'algoritmo LoRA) combinandolo con un'architettura che vincola l'output allo schema ontologico del Datavault. Questo accorgimento previene in modo strutturale le allucinazioni sintattiche tipiche dei Large Language Models. Dal punto di vista dell'utente, l'interazione avviene tramite una singola barra di ricerca, mentre un backend difensivo gestisce in modo invisibile la traduzione e l'interrogazione dell'endpoint Blazegraph.
 
-Il prototipo è stato sottoposto a una valutazione quantitativa, misurando \textit{precision} e \textit{recall} per certificare l'accuratezza delle query generate, e ad un'analisi qualitativa focalizzata sulla capacità di supportare la ricerca fluida e dinamiche di \textit{serendipity}. I risultati dimostrano la solidità del traduttore semantico sul campo, pur delineando alcuni vincoli nella gestione di richieste fortemente ambigue. In conclusione, il lavoro conferma l'efficacia dell'intelligenza artificiale generativa per migliorare l'accesso agli archivi semantici, aprendo nuove prospettive per future estensioni multidisciplinari.
+La validazione quantitativa, condotta misurando \textit{precision} e \textit{recall} su un test set \textit{held-out}, ha registrato un'accuratezza sintattica ed esecutiva ottimale per le categorie di ricerca addestrate. I risultati confermano che un modello di piccole dimensioni, se opportunamente vincolato al proprio dominio, può abbattere la barriera tecnica d'accesso agli archivi semantici complessi.
 
 
 % INDICI

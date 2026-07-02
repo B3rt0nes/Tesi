@@ -1,6 +1,6 @@
 \chapter{Quenya}\label{chap:prototipo}
 
-    Avendo chiarito il fondamento scientifico e tecnologico nel \cref{chap:contesto}, presentiamo ora il prototipo di Quenya (\textbf{Qu}ery \textbf{E}ngine for \textbf{N}avigating \textbf{Y}our \textbf{A}rchives), un query builder sviluppato per sopperire alle problematiche riscontrate.
+    Dopo aver esaminato il contesto nel \cref{chap:contesto}, presentiamo ora il prototipo di Quenya (\textbf{Qu}ery \textbf{E}ngine for \textbf{N}avigating \textbf{Y}our \textbf{A}rchives), un query builder sviluppato per sopperire alle problematiche riscontrate.
 
     Questo capitolo è organizzato secondo una prospettiva \textit{user-centered}: partiamo dal dominio di applicazione (DH.ARC e il Datavault) e dal profilo degli utenti target (\cref{sec:dominio}), passiamo all'architettura funzionale e all'interfaccia del sistema (\cref{sec:architettura}), e concludiamo con tre scenari d'uso concreti (\cref{sec:casiduso}) arricchiti dalle relative schermate, per dimostrare il valore aggiunto della nostra proposta.
 
@@ -10,11 +10,10 @@
         Il Digital Humanities Advanced Research Centre (DH.ARC) è un polo di ricerca dell'Università di Bologna afferente al Dipartimento di Filologia Classica e Italianistica (FICLIT), nato con l'obiettivo di ``connettere studenti, ricercatori, personale IT e professori del FICLIT e del Dipartimento di Informatica \-- Scienza e Ingegneria (DISI)''\cite{Ams26}.
         Il centro ha lo scopo di fungere da hub per gli studiosi e le istituzioni, supportandoli ``nella progettazione, sviluppo e manutenzione di progetti di ricerca DH'' e promuovendo iniziative innovative nel campo umanistico.
 
-        All'interno di questo ecosistema, una delle infrastrutture tecnologiche di conservazione è il \textit{Datavault}, un repository digitale basato sull'architettura Fedora.
-        Il Datavault è un repository digitale basato sull'architettura Fedora, progettato per supportare l'archiviazione a lungo termine, la conservazione e la gestione strutturata delle risorse digitalizzate. 
+        All'interno di questo contesto, una delle infrastrutture tecnologiche di conservazione è il \textit{Datavault}, un repository digitale basato sull'architettura Fedora, progettato per supportare l'archiviazione a lungo termine, la conservazione e la gestione strutturata delle risorse digitalizzate. 
         Dal punto di vista tecnico, il repository espone le proprie risorse sotto forma di triple RDF per favorire l'interoperabilità semantica e l'integrazione con strumenti di analisi avanzata.\cite{Far25}
         Tuttavia, il Datavault ospita attualmente grande mole di dati, dell'ordine di milioni di triple RDF fortemente interconnesse e strutturalmente molto simili tra loro.
-        Questa vastità e omogeneità sintattica rende la ricerca, l'estrazione e il recupero di specifiche risorse un'operazione complessa e non immediata, ponendo sfide significative per l'esplorazione del contenuto.
+        Questa vastità e omogeneità sintattica rende la ricerca e il recupero di specifiche risorse un'operazione complessa.
 
     \subsection{Profilo dell'utente finale: i ricercatori del centro}\label{subsec:utenti}
 
@@ -25,7 +24,7 @@
             La loro alfabetizzazione digitale nel campo dell'Information Retrieval si limita generalmente all'impiego di strumenti ``pronti all'uso'': cataloghi OPAC, database relazionali con maschere pre-configurate o motori di ricerca generici; raramente hanno familiarità con triplestore RDF, SPARQL, o Knowledge Graphs.
 
         \subsubsection{Caratterizzazione dei bisogni informativi}
-            In questo ecosistema, gli utenti non ricercano identificativi esatti o risposte chiuse; piuttosto, adottano comportamenti di ricerca esplorativa, procedendo per esplorazione libera cercando di collegare concetti e scoprire associazioni non immediate tra i documenti.
+            In questo ecosistema, gli utenti non ricercano identificativi esatti o risposte chiuse; adottano comportamenti di ricerca esplorativa, collegando concetti e scoprendo associazioni non immediate tra i documenti.
             Interrogando il Datavault, gli umanisti del centro necessitano di porre interrogazioni cross-dominio articolate, formulando mentalmente domande come: 
 
             \begin{quote}
@@ -39,10 +38,9 @@
 \section{Architettura Funzionale e Interfaccia Utente}\label{sec:architettura}
 
     \subsection{L'interfaccia: come si usa il Data Vault Explorer}\label{subsec:interfaccia}
-        Per risolvere i problemi di carico cognitivo e rigidità formale descritti nel capitolo precedente, il sistema si presenta all'utente attraverso un'interfaccia minimalista e conversazionale (il Data Vault Explorer). 
-        Per superare le barriere legate all'alto carico cognitivo e alla rigidità formale descritte nelle sezioni precedenti, l'applicativo è stato esteso introducendo un modulo di interazione minimalista e conversazionale.
+        Per superare le barriere legate all'alto carico cognitivo e alla rigidità formale descritte nel capitolo precedente, l'applicativo è stato esteso introducendo un modulo di interazione minimalista e conversazionale.
         
-        Invece di dover navigare attraverso complessi moduli a filtri multipli o di dover studiare a priori l'ontologia sottostante per formulare interrogazioni dirette, l'utente ha ora a disposizione un singolo e intuitivo punto di ingresso: la \textit{Quenya Search Bar}. Questa scelta di design permette di aggirare la complessità del database dietro un'interfaccia familiare. Il sistema si presenta visivamente in modo simile ai motori di ricerca, tuttavia, è potenziato dalla capacità del Large Language Model di interpretare le sfumature del linguaggio naturale, traducendo in tempo reale l'intento esplorativo del ricercatore in una query SPARQL formale ed eseguibile.
+        Invece di dover navigare attraverso complessi moduli a filtri multipli o di dover studiare a priori l'ontologia sottostante per formulare interrogazioni dirette, l'utente ha ora a disposizione un singolo e intuitivo punto di ingresso: la \textit{Quenya Search Bar}. L'interfaccia è simile ai motori di ricerca, ma il backend interpreta le sfumature del linguaggio naturale traducendo l'intento del ricercatore in una query SPARQL eseguibile.
 
         \begin{figure}[H]
             \centering
@@ -54,7 +52,7 @@
 
     \subsection{Il flusso dell'interazione}\label{subsec:flusso}
 
-        Dal punto di vista dell'utente, l'interazione con il sistema si articola secondo un flusso invisibile ma rigorosamente strutturato, progettato per astrarre completamente la complessità tecnica sottostante. Questo processo è schematizzato nella Figura~\ref{fig:flusso_interazione}.
+        Dal punto di vista dell'utente, l'interazione con il sistema si articola secondo un flusso strutturato, progettato per astrarre la complessità tecnica sottostante. Questo processo è schematizzato nella Figura~\ref{fig:flusso_interazione}.
 
         \begin{figure}[htbp]
             \centering
@@ -85,23 +83,23 @@
         Come illustrato nello schema, le fasi del processo sono le seguenti:
         \begin{enumerate}
             \item \textbf{Input}: l'utente digita il proprio bisogno informativo in italiano in forma libera. In questa fase non vi sono campi strutturati da compilare né regole di sintassi da rispettare.
-            \item \textbf{Elaborazione}: il testo naturale viene inviato al componente intelligente (il modello Quenya fine-tuned) che, essendo a conoscenza dello schema RDF e dell'ontologia del Datavault, produce autonomamente la query SPARQL corrispondente.
-            \item \textbf{Esecuzione e Output}: la query SPARQL viene inoltrata a Blazegraph. L'utente non è esposto al codice formale (salvo esplicita richiesta), ma visualizza esclusivamente i risultati pertinenti tradotti nell'interfaccia grafica, aggirando così del tutto la barriera tecnologica.
+            \item \textbf{Elaborazione}: il testo naturale viene inviato al modello Quenya fine-tuned che, essendo a conoscenza dello schema RDF e dell'ontologia del Datavault, produce autonomamente la query SPARQL corrispondente.
+            \item \textbf{Esecuzione e Output}: la query SPARQL viene inoltrata a Blazegraph. L'utente non è esposto al codice formale (salvo esplicita richiesta), ma visualizza esclusivamente i risultati pertinenti nell'interfaccia grafica.
         \end{enumerate}
 
     \subsection{I componenti del sistema e le loro responsabilità}\label{subsec:componenti}
         Il sistema si articola in tre componenti principali:
         \begin{enumerate}
             \item \textbf{Frontend (Data Vault Explorer)}: raccoglie l'input testuale e renderizza i risultati in formato navigabile.
-            \item \textbf{Backend (Quenya Query Builder + RAG Engine)}: il ``cervello'' del sistema. Riceve la domanda, recupera lo schema RDF, genera la query SPARQL tramite il modello e gestisce gli errori semantici (evitando le allucinazioni).
+            \item \textbf{Backend (Quenya Query Builder + RAG Engine)}: il componente centrale del sistema. Riceve la domanda, recupera lo schema RDF, genera la query SPARQL tramite il modello e gestisce gli errori semantici (evitando le allucinazioni).
             \item \textbf{Data Layer (Blazegraph + Schema RDF)}: immagazzina i milioni di triple ed esegue l'interrogazione generata dal backend.
         \end{enumerate}
 
 \section{Casi d'uso principali ed esempi}\label{sec:casiduso}
 
-    Descriviamo tre scenari d'uso concreti che dimostrano l'efficacia del sistema presso DH.ARC, evidenziando il parallelismo tra l'interazione logica (traduzione LLM e sanitizzazione) e il riscontro visivo restituito all'utente.\@
+    Descriviamo tre scenari d'uso concreti che dimostrano l'efficacia del sistema presso DH.ARC.\@
 \newpage
-    \subsection{Caso d'uso 1: ricerca per caratteristiche di acquisizione e gestione anomalie}\label{subsec:cu1}
+    \subsection{Caso d'uso 1: ricerca per caratteristiche di acquisizione}\label{subsec:cu1}
         \textbf{Attore}: un ricercatore che vuole individuare immagini acquisite con specifiche caratteristiche tecniche.\\
         \textbf{Input testuale}: 
         \begin{center}
@@ -129,7 +127,7 @@
         \end{figure}
         \vfill
 
-        \textbf{Risoluzione del problema}: Oltre a delegare all'LLM l'onere della traduzione del linguaggio naturale nel predicato corretto (\code{exif:make}), questo scenario dimostra la resilienza dell'architettura. 
+        \textbf{Risoluzione del problema}: Oltre a delegare all'LLM l'onere della traduzione del linguaggio naturale nel predicato corretto (\code{exif:make}), questo scenario dimostra la robustezza dell'architettura. 
 
     \subsection{Caso d'uso 2: disambiguazione semantica dell'autore}\label{subsec:cu2}
         \textbf{Attore}: un responsabile di un progetto di digitalizzazione o ricercatore interessato alla provenienza materiale dello scatto.\\
