@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ringraziamenti Tesi</title>
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Image Container for custom photos -->
+    <div id="bg-container" class="bg-container"></div>
+    <!-- Dark overlay to ensure text readability -->
+    <div class="bg-overlay"></div>
+
+    <main class="glass-panel">
+        
+        <!-- STATE 1: SEARCH -->
+        <section id="state-search" class="state-section active">
+            <h1>Ringraziamenti</h1>
+            <p class="subtitle">Inserisci il tuo nome e cognome per scoprire se ho pensato a te!</p>
+            
+            <form id="search-form" class="form-group">
+                <input type="text" id="name-input" placeholder="Es. Mario Rossi" required autocomplete="off">
+                <button type="submit" class="btn-primary">Cerca</button>
+            </form>
+            <div id="search-error" class="error-msg"></div>
+            
+            <div id="suggestions-container" class="suggestions-box hidden">
+                <p>Forse cercavi:</p>
+                <div id="suggestions-list" class="suggestions-list"></div>
+            </div>
+        </section>
+
+        <!-- STATE 2: QUESTION -->
+        <section id="state-question" class="state-section">
+            <h2 id="greeting-title">Ciao, <span></span>!</h2>
+            <p class="subtitle">Prima di procedere, una piccola domanda per essere sicuri che sia davvero tu...</p>
+            
+            <div class="question-box">
+                <h3 id="question-text">Domanda qui?</h3>
+                <div id="options-container" class="options-grid">
+                    <!-- Buttons injected via JS -->
+                </div>
+            </div>
+            <div id="question-error" class="error-msg"></div>
+            <button id="btn-back" class="btn-secondary mt-4">Torna indietro</button>
+        </section>
+
+        <!-- STATE 3: SUCCESS (ACKNOWLEDGEMENT) -->
+        <section id="state-success" class="state-section">
+            <h1 class="success-title">Grazie!</h1>
+            <div class="ack-box">
+                <p id="ack-text">Testo del ringraziamento...</p>
+            </div>
+            <button id="btn-restart" class="btn-secondary mt-4">Cerca un'altra persona</button>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
