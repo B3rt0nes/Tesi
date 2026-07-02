@@ -1,0 +1,85 @@
+\chapter{Introduzione}\label{chap:introduzione}
+
+% =============================================================================
+\section{Il claim, il problema e l'ambito}\label{sec:claim}
+% =============================================================================
+
+L'interrogazione di database RDF è un'operazione complessa che richiede competenze tecniche avanzate, in particolare la padronanza del linguaggio formale SPARQL\@. Nei contesti di ricerca umanistica, questa barriera può impedire ai ricercatori di esplorare e valorizzare patrimoni informativi estesi.
+
+Il presente lavoro dimostra che un modello linguistico compatto, sottoposto a fine-tuning con la tecnica LoRA su un dataset sintetico costruito appositamente e guidato da un approccio ispirato alla Retrieval-Augmented Generation (RAG), è in grado di tradurre domande espresse in linguaggio naturale italiano in query SPARQL eseguibili su un repository RDF di circa 19 milioni di triple. Il sistema permette ai ricercatori umanisti di interrogare un repository RDF senza dover scrivere SPARQL\@.
+
+Il problema nasce da un'osservazione concreta: il Datavault del centro di ricerca DH.ARC (Digital Humanities Advanced Research Centre) dell'Università di Bologna ospita milioni di risorse digitalizzate, esposte sotto forma di triple RDF\citeweb{W3c14} per favorire l'interoperabilità semantica. Tuttavia, non esiste attualmente alcun meccanismo che consenta ai ricercatori del centro di interrogare questo patrimonio per contenuto o per concetto: l'unica alternativa è la navigazione manuale della struttura a container o la scrittura diretta di query SPARQL\citeweb{W3c13}, un linguaggio dichiarativo formale che impone vincoli rigorosi e richiede la conoscenza di ontologie e convenzioni di metadati specifiche del repository\cite{Vas25}\cite{Vas24}.
+
+Questo ostacolo si articola su tre livelli distinti. Il primo è una \textbf{barriera cognitiva}: l'interazione con SPARQL esige la conoscenza di prefissi ontologici complessi (ad esempio \code{dc:}, \code{exif:}, \code{ebucore:}) anche solo per formulare una query di base, generando il fenomeno della ``scatola vuota'' che lascia l'utente senza orientamento. Il secondo livello è una \textbf{barriera strutturale}: l'assenza di una mappa visiva delle relazioni all'interno del grafo RDF fa sì che il ricercatore non sappia quali proprietà esistano realmente nel database né come i dati siano formalizzati nell'ontologia. Il terzo è una \textbf{barriera pratica}: la forte rigidità sintattica determina che un singolo errore di battitura non produca risultati, senza messaggi di errore informativi che consentano un debugging autonomo.
+
+L'ambito del lavoro si colloca all'intersezione tra le Digital Humanities, l'accesso a Knowledge Graphs nel dominio del patrimonio culturale e la traduzione automatica Text-to-SPARQL\@. Il contributo si concretizza in ``Quenya'' (\textbf{Qu}ery \textbf{E}ngine for \textbf{N}avigating \textbf{Y}our \textbf{A}rchives), un sistema integrato nell'infrastruttura del Datavault e progettato per chi conosce il dominio umanistico ma non SPARQL\@.
+
+% =============================================================================
+\section{Contesto scientifico e tecnologico}\label{sec:contesto_intro}
+% =============================================================================
+
+Il problema affrontato in questa tesi si colloca in un contesto scientifico e tecnologico che il \cref{chap:contesto} analizza in modo esteso.
+
+Sul piano dello \textbf{stato dell'arte}, la letteratura documenta un divario strutturale tra i bisogni esplorativi degli studiosi umanisti e la rigidità sintattica dei sistemi di interrogazione tradizionali. I ricercatori nel dominio delle Digital Humanities non procedono per query esatte: adottano strategie di ricerca non lineari, teorizzate da Marcia Bates con il modello \textit{berrypicking}\cite{Bat89}, in cui l'obiettivo informativo si raffina progressivamente durante l'esplorazione stessa. In questo contesto, la ricerca favorisce la \textit{serendipity}, la scoperta inattesa di pattern rilevanti durante la navigazione dei dati, che gli strumenti tradizionali basati su query formali ostacolano.
+
+Sul piano dei \textbf{fondamenti teorici}, l'architettura dell'informazione giustifica il ricorso a un'interfaccia conversazionale mediata da LLM\@. Morville e Rosenfeld\cite{Mor08} hanno dimostrato che trattare il recupero di informazioni come un problema puramente algoritmico è inadeguato quando si opera su contenuti semistrutturati: i sistemi tradizionali sono progettati per recuperare \textit{dati esatti}, mentre gli studiosi ricercano \textit{concetti}, \textit{idee} e \textit{relazioni}. Rosati\cite{Ros07} completa il quadro analizzando il carico cognitivo attraverso due principi: la \textit{legge del minimo sforzo}, per cui gli utenti accettano risultati di qualità inferiore piuttosto che affrontare strategie di ricerca più impegnative, e la \textit{Legge di Hick}, per cui esporre l'utente a un numero elevato di opzioni non organizzate genera paralisi decisionale. Un'interfaccia basata su un singolo campo di testo azzera entrambi questi effetti.
+
+Sul piano \textbf{tecnologico}, due innovazioni rendono oggi possibile una soluzione che bilanci flessibilità e affidabilità. La prima è il paradigma Retrieval-Augmented Generation (RAG), originariamente concepito per compiti di question-answering su testi non strutturati: nel nostro caso, anziché recuperare documenti testuali, il sistema recupera frammenti di schema RDF, esempi di predicati e descrizioni ontologiche, vincolando la generazione del modello allo schema reale del Datavault e riducendo il rischio di allucinazioni su classi o proprietà inesistenti. La seconda è la tecnica LoRA (\textit{Low-Rank Adaptation}), che consente il fine-tuning di un modello linguistico compatto su un dataset di dominio specifico senza caricare in memoria l'intero modello.
+
+% =============================================================================
+\section{La soluzione proposta}\label{sec:soluzione_intro}
+% =============================================================================
+
+La soluzione proposta, descritta in dettaglio nei \cref{chap:prototipo,chap:implementazione}, è il Quenya Query Builder: un sistema che traduce interrogazioni espresse in italiano naturale in query SPARQL eseguibili direttamente sull'endpoint Blazegraph del Datavault, mostrando poi i risultati filtrati all'interno di un'interfaccia grafica navigabile.
+
+Dal punto di vista architetturale, il sistema si articola in tre componenti. Il primo è il \textbf{frontend} (Data Vault Explorer), un'applicazione React che raccoglie l'input testuale dell'utente e renderizza i risultati in formato navigabile. Il punto d'ingresso è la \textit{Quenya Search Bar}, un singolo campo di testo in linguaggio naturale che sostituisce la complessità di form a filtri multipli o di endpoint SPARQL esposti, riducendo il carico cognitivo descritto nella sezione precedente. L'interfaccia è simile a un motore di ricerca, ma il backend interpreta le sfumature del linguaggio naturale tramite il modello. Il secondo componente è il \textbf{backend} (Quenya Query Builder + RAG Engine), implementato in FastAPI:\@ riceve la domanda, recupera lo schema RDF, genera la query SPARQL tramite il modello e gestisce gli errori semantici in modo difensivo. Il terzo è il \textbf{data layer} (Blazegraph + Schema RDF), che immagazzina le triple ed esegue l'interrogazione generata.
+
+Il flusso dell'interazione segue quattro fasi invisibili all'utente: l'input in linguaggio naturale, l'elaborazione semantica da parte del modello Quenya (che, conoscendo l'ontologia del Datavault, produce autonomamente la query SPARQL corrispondente), l'esecuzione della query su Blazegraph, e la restituzione dei risultati nell'interfaccia grafica. L'utente non vede il codice SPARQL:\@ la complessità sintattica e ontologica resta nel backend.
+
+Il cuore del sistema è il modello Quenya, ottenuto tramite fine-tuning del modello Phi-3-mini con un adapter LoRA.\@ L'addestramento è stato condotto su un dataset costruito appositamente attraverso un generatore a template parametrici, capace di produrre coppie (domanda in italiano, query SPARQL corretta) distribuite su 13 categorie di interrogazione più la gestione delle richieste fuori dominio (Out-of-Domain). La coerenza tra fase di addestramento e fase di inferenza è garantita da un system prompt identico, byte per byte, in entrambi i contesti: 8 regole assolute che vincolano la struttura sintattica della query generata (un'unica struttura \code{SELECT DISTINCT}, predicati fissi per ciascun intento, gestione esplicita dei casi fuori dominio), riducendo lo spazio delle risposte plausibili e minimizzando il rischio di allucinazioni strutturali.
+
+% =============================================================================
+\section{La valutazione}\label{sec:valutazione_intro}
+% =============================================================================
+
+Il prototipo è stato valutato su due piani, descritti nel \cref{chap:valutazione}: l'\textbf{efficienza}, relativa alle prestazioni quantitative misurabili, e l'\textbf{efficacia}, relativa al miglioramento qualitativo apportato dal sistema.
+
+La valutazione quantitativa è stata condotta secondo una pipeline a due fasi. Nella prima fase, eseguita su GPU NVIDIA T4, il modello fine-tuned genera la query SPARQL corrispondente a ciascuna delle 500 domande del test set. Nella seconda fase, eseguita localmente su CPU, sia la query generata sia quella di riferimento vengono eseguite contro l'endpoint Blazegraph reale del Datavault, e i rispettivi insiemi di risultati vengono confrontati per calcolare precision, recall e F1.
+
+Il \textbf{100\% delle query generate è stato eseguito con successo} contro Blazegraph, senza errori di sintassi o di esecuzione, il che indica che le regole del system prompt vincolano il modello a generare query sintatticamente valide. Le metriche di retrieval (precision, recall, F1) raggiungono il valore di 1.000 su tutte le 7 categorie testate, con un riconoscimento del 100\% anche per le richieste Out-of-Domain. Il tempo medio di generazione per query è di 7.45 secondi su GPU T4, con la maggioranza delle query generata in 7--9 secondi.
+
+Questi risultati vanno però qualificati. Un'ispezione diretta delle 500 coppie rivela che tutte le query generate sono identiche, carattere per carattere, alla rispettiva query di riferimento. Questo fenomeno è spiegabile alla luce di come il test set è stato costruito: le domande e le query di riferimento sono prodotte dallo stesso sistema di template parametrici usato per il training. Le 8 regole del system prompt vincolano fortemente la forma sintattica della query attesa, riducendo lo spazio delle risposte plausibili a un insieme ristretto e, per costruzione, quasi deterministico. Di conseguenza, la valutazione qui presentata misura principalmente la capacità del modello di rispettare in modo affidabile la grammatica e le regole imposte, più che la sua capacità di decodificare formulazioni libere e impreviste di un ricercatore umano. La prova con domande poste spontaneamente da utenti reali resta un obiettivo degli sviluppi futuri.
+
+% =============================================================================
+\section{Sviluppi futuri}\label{sec:sviluppi_intro}
+% =============================================================================
+
+Il \cref{chap:conclusioni} dettaglia gli sviluppi futuri del sistema, organizzati per priorità decrescente.
+
+Gli interventi più urgenti riguardano l'estensione della valutazione alle categorie di query non rappresentate nel test set attuale (negazione, OR logico, paginazione custom), la trasformazione del namespace EXIF hardcoded in un parametro di configurazione centralizzato, e la misurazione dei tempi di inferenza reali sul backend di produzione in CPU, attualmente non disponibile.
+
+Manca poi un test di usabilità con utenti reali del dominio DH.ARC:\@ non esiste ancora una misura empirica del vantaggio percepito da un ricercatore umanista, sia in termini di tempo risparmiato sia di soddisfazione d'uso. Ulteriori estensioni riguardano il supporto multilingue, l'aggiunta di un'interfaccia di correzione manuale della query generata per gli utenti più esperti, e l'ampliamento della copertura semantica dello schema a predicati non ancora sfruttati.
+
+Guardando più avanti, le estensioni includono il passaggio da un prompt statico a un vero meccanismo RAG dinamico che recuperi solo i frammenti di schema rilevanti per ciascuna domanda; l'integrazione di modelli di visione (ad esempio embedding CLIP-like) per una ricerca per contenuto visivo, non limitata ai metadati; e l'evoluzione verso un sistema federato capace di interrogare più triplestore appartenenti a istituzioni diverse del patrimonio culturale.
+
+% =============================================================================
+\section{Struttura della dissertazione}\label{sec:struttura_dissertazione}
+% =============================================================================
+
+La dissertazione è organizzata come segue:
+
+\begin{itemize}
+    % QUESTI DUE COMANDI RIMUOVONO LO SPAZIO BIANCO EXTRA TRA I PUNTI ELENCO
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    
+    \item Il \cref{chap:contesto} inquadra il problema dal punto di vista teorico, analizzando lo stato dell'arte della ricerca semantica nel patrimonio culturale, i principi dell'architettura dell'informazione che governano il carico cognitivo dell'utente, e le tecnologie abilitanti (modelli linguistici compatti, tecnica RAG, fine-tuning con LoRA).
+    
+    \item Il \cref{chap:prototipo} presenta il sistema dal punto di vista dell'utente finale: il dominio di applicazione (DH.ARC e il Datavault), il profilo dei ricercatori target, l'architettura funzionale, l'interfaccia conversazionale e tre casi d'uso concreti con le relative schermate.
+    
+    \item Il \cref{chap:implementazione} dettaglia l'architettura tecnica e le scelte implementative: lo stack tecnologico, la pipeline di fine-tuning del modello, l'architettura del backend FastAPI e la struttura del dataset di addestramento.
+    
+    \item Il \cref{chap:valutazione} sottopone il sistema a una valutazione quantitativa (tasso di esecuzione, metriche di retrieval, tempi di generazione) e qualitativa (miglioramento rispetto alle soluzioni precedenti), con una discussione critica dei limiti metodologici.
+    
+    \item Il \cref{chap:conclusioni} chiude il lavoro con un bilancio dei punti di forza e dei limiti del sistema, e delinea gli sviluppi futuri ordinati per priorità.
+\end{itemize}

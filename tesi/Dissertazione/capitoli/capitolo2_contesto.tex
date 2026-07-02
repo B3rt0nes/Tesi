@@ -1,0 +1,193 @@
+\chapter{Dall'interrogazione formale alla ricerca semantica}\label{chap:contesto}
+
+Il capitolo esplora il background scientifico e tecnologico alla base del lavoro proposto.
+Partiamo dal \textit{problema di fondo}: come fornire accesso content-aware a repository RDF di dimensioni massive per utenti privi di competenze tecniche formali?
+
+La risposta richiede una comprensione su tre livelli di complessità:
+\begin{enumerate}
+    \item \textbf{Lo stato dell'arte}: come gli approcci precedenti (form rigidi, endpoint SPARQL nudi) falliscono nel dominio umanistico;
+    \item \textbf{I fondamenti teorici}: i principi dell'architettura dell'informazione che guidano un'alternativa;
+    \item \textbf{Le tecnologie emergenti}: come Retrieval-Augmented Generation (RAG) e Large Language Models (LLM) abilitano una soluzione più flessibile.
+\end{enumerate}
+
+Procederemo così: nel \cref{sec:statoarte} analizziamo il divario tra i bisogni esplorativi degli studiosi umanisti e la rigidità sintattica dei sistemi tradizionali. Successivamente, nel \cref{sec:archinfo}, esaminiamo i principi fondativi dell'architettura dell'informazione che giustificano il ricorso agli LLM.\@
+Infine, nel \cref{sec:rag}, descriviamo il paradigma RAG come soluzione tecnologica che bilancia flessibilità e affidabilità.
+
+\section{Lo stato dell'arte}\label{sec:statoarte}
+\subsection{Il contesto: Digital Humanities e la barriera della ricerca}\label{subsec:dh_barrier}
+
+Nel dominio delle Digital Humanities (DH) e della gestione del patrimonio culturale, la ricerca all'interno di repository RDF è un ostacolo per chi manca di competenze tecniche avanzate.
+Come evidenziato in letteratura, lavorare con strumenti come SPARQL impone vincoli rigorosi\cite{Vas25} e richiede una familiarità profonda con ontologie complesse e convenzioni di metadati\cite{Vas24}. 
+
+Tali approcci si basano su query create manualmente, che risultano fragili e difficili da adattare a esigenze mutevoli\cite{Mar25}. Questo pone il ricercatore di fronte all'ostacolo cognitivo della ``scatola vuota'': chi possiede un bisogno informativo vago o in via di definizione viene paralizzato dalla necessità di dichiarare tutto a priori.
+
+\subsection{Il divario tra ricerca strutturata e ricerca esplorativa}\label{subsec:berrypicking}
+
+Alla base dei tradizionali sistemi di Information Retrieval (IR) vi è un assunto fondamentale: che l'utente inizi l'interazione con un bisogno informativo perfettamente strutturato.
+Nel dominio umanistico, tuttavia, l'utente procede per esplorazione.
+
+Questo comportamento è stato teorizzato da Marcia Bates con il modello \textit{berrypicking}\cite{Bat89}: una strategia di ricerca non lineare in cui gli studiosi si muovono iterativamente, aggiustando la rotta e raffinando gli obiettivi man mano che acquisiscono nuove informazioni durante l'esplorazione.
+In questo scenario, la ricerca esplorativa favorisce la \textit{serendipity}, la scoperta inattesa di pattern rilevanti durante la navigazione dei dati, che gli strumenti tradizionali ostacolano.
+
+Considerando il netto contrasto tra la rigidità sintattica di SPARQL e la natura fluida ed evolutiva della ricerca umanistica, serve un modo diverso di interagire con i dati, che consenta ai ricercatori di esprimere bisogni emergenti senza dover ricorrere a linguaggi formali.
+
+\subsection{La ``scatola vuota'' e le tre barriere di SPARQL}\label{subsec:tre_barriere}
+
+Costringere ricercatori umanisti a esprimere bisogni complessi tramite endpoint SPARQL genera un ostacolo su tre livelli:
+
+\begin{enumerate}
+    \item \textbf{Barriera cognitiva}: L'interazione esige la scrittura in un linguaggio dichiarativo formale e l'obbligo di conoscere complessi prefissi ontologici (es.\ \code{dc:}, \code{exif:}, \code{ebucore:}) solo per abbozzare una query di base.
+    \item \textbf{Barriera strutturale}: L'assenza di una mappa visiva delle relazioni all'interno del grafo RDF fa sì che l'utente non sappia quali proprietà esistano realmente nel database né come i dati siano formalizzati nell'ontologia.
+    \item \textbf{Barriera pratica}: La forte rigidità sintattica determina che un singolo errore di battitura produca un set di risultati vuoto. L'assenza di messaggi di errore parlanti impedisce qualsiasi tentativo di debugging autonomo.
+\end{enumerate}
+
+Studi sull'usabilità delle interfacce per Knowledge Graphs confermano che linguaggi come SPARQL impongono vincoli rigidi e richiedono una conoscenza esplicita degli schemi, competenze estranee ai professionisti del patrimonio culturale\cite{Vas25}.
+\newpage
+\section{Fondamenti di architettura dell'informazione}\label{sec:archinfo}
+La progettazione di un sistema di accesso per un database RDF non può limitarsi alla pura efficienza computazionale del recupero dati. Deve invece rispondere ai principi dell'\textit{architettura dell'informazione}, ovvero la disciplina che studia come rendere le informazioni realmente trovabili e usabili.
+
+In un contesto umanistico, costringere l'utente a interfacciarsi con la complessità dello schema sottostante attraverso filtri rigidi o linguaggi formali genera un ostacolo cognitivo.
+Analizziamo i principi che giustificano il ricorso a un'interfaccia conversazionale mediata da LLM.\@
+
+    \subsection{L'illusione della ricerca algoritmica}\label{subsec:illusione}
+
+    I sistemi di reperimento basati su query formali (SQL, SPARQL) assumono erroneamente che l'utente sappia sempre cosa cercare e come tradurre il proprio bisogno in un costrutto logico. Peter Morville e Louis Rosenfeld hanno smontato questo assunto:
+
+    \begin{quotation}
+    ``Consideriamo questo modello pericoloso perché basato su un equivoco: che trovare informazioni sia un problema diretto, che può essere risolto da un semplice approccio algoritmico. Dopo tutto, abbiamo risolto la sfida del recupero dati --- che, ovviamente sono fatti e cifre --- con tecnologie database come SQL.\@ Così procede la teoria, si trattano idee e concetti incorporati nei documenti testuali semistrutturati nello stesso modo''\hfill\cite{Mor08}
+    \end{quotation}
+
+    I sistemi algoritmici tradizionali falliscono nel dominio umanistico perché sono progettati per recuperare \textit{dati esatti}, mentre gli studiosi ricercano \textit{concetti}, \textit{idee} e \textit{relazioni}. Tali concetti sono per loro natura ambigui e sfumati. Un LLM colma questo divario: accetta l'ambiguità del linguaggio naturale e la converte nella sintassi rigida richiesta dalla macchina.
+
+    \subsection{Recall, Precision e il compromesso ineluttabile}\label{subsec:recall_precision}
+
+    Un problema critico delle interfacce tradizionali a filtri è l'impossibilità di calibrare dinamicamente il raggio della ricerca. Morville e Rosenfeld spiegano che ogni ricerca è un compromesso matematico tra due metriche inversamente correlate:
+
+    \begin{quotation}
+        \begin{align}
+            \var{recall} &= \frac{|\var{doc rilevanti recuperati}|}{|\var{doc nella raccolta}|} \label{eq:recall}\\[5pt]
+            \var{precision} &= \frac{|\var{doc rilevanti recuperati}|}{|\var{doc rilevanti della raccolta}|} \label{eq:precision}
+        \end{align}
+        ``[\ldots] Non sarebbe bello poter ottenere contemporaneamente elevati valori di recall e precision? Purtroppo non si può avere botte piena e moglie ubriaca: recall e precision sono inversamente correlati''\hfill\cite{Mor08}
+    \end{quotation}
+
+    In un'interfaccia a maschera con decine di campi e filtri ontologici, l'utente è costretto a dichiarare a priori il livello di precisione desiderato. Se sbaglia un filtro, ottiene zero risultati (eccesso di Precision); se ne omette uno, viene sommerso da migliaia di risultati irrilevanti (eccesso di Recall).
+
+    In una conversazione in linguaggio naturale con un LLM, invece, l'aggiustamento avviene in modo iterativo e fluido. L'utente può iniziare con una richiesta esplorativa e ampia (es.\ ``Mostrami tutti i manoscritti del XIV secolo'', privilegiando il Recall) e, osservando i primi risultati, raffinare il tiro conversando (``Filtra solo quelli con miniature e digitalizzati ad alta risoluzione'', aumentando la Precision). L'LLM permette di variare queste metriche senza costringere l'utente a riscrivere manualmente la query.
+
+    \subsection{Carico cognitivo: la Legge del minimo sforzo e la Legge di Hick}\label{subsec:cognitive_load}
+
+    Dal punto di vista del carico cognitivo, esporre all'utente l'immensa topologia di un Knowledge Graph attraverso decine di menu a tendina o l'obbligo di conoscere specifiche ontologie porta alla frustrazione e può sfociare nell'abbandono del sistema.
+
+    Luca Rosati analizza questo fenomeno attraverso due principi cognitivi fondamentali. Il primo è la \textit{legge del minimo sforzo}:
+
+    \begin{quotation}
+    ``La legge del minimo sforzo (least effort) regola quindi il nostro sistema di information seeking, al punto che spesso accettiamo anche contenuti di bassa qualità o affidabilità (se più facili da ottenere e usare) pur di non ricorrere a strategie di ricerca attive, le quali comportano necessariamente sforzi, tempi e competenze maggiori''\hfill\cite{Ros07}
+    \end{quotation}
+
+    Se l'interfaccia richiede la fatica di apprendere prefissi RDF o di comprendere uno schema dati complesso, è plausibile che l'utente rinuncerà alla ricerca.
+
+    Il secondo principio è la \textit{Legge di Hick}, la quale afferma che, in presenza di $n$ alternative equiprobabili, il tempo necessario per selezionarne una è proporzionale (a meno di una costante additiva) al logaritmo in base 2 del numero di scelte più 1:
+
+    \[ \text{tempo} = a + b \log_2(n+1) \]
+
+    I coefficienti $a$ e $b$ dipendono da specifiche condizioni al contorno, tra cui le modalità di presentazione delle opzioni e il grado di familiarità dell'utente~\cite{Ros07}.
+
+    Tuttavia, Rosati sottolinea che, qualora le alternative ``siano presentate in modo confuso'' o costituiscano ``una lista disordinata'' priva di un criterio logico riconoscibile, il tempo di decisione scala in modo lineare, aumentando il carico cognitivo fino a divenire insostenibile e causando paralisi decisionale. Esporre l'utente a un form SPARQL nudo o a una maschera di ricerca avanzata con decine di menu a tendina equivale a questo: innescare un ``paradosso della scelta'' paralizzante.
+
+    Un'interfaccia conversazionale basata su LLM nasconde questa complessità strutturale nel backend. L'utente si trova di fronte a un singolo ``spazio'' (un box di chat), azzerando l'effetto della Legge di Hick e assecondando la Legge del minimo sforzo. Non dovendo scegliere tra decine di opzioni incomprensibili, il ricercatore delega la traduzione ontologica all'LLM e si concentra sull'analisi delle risorse.
+
+    \subsection{Paradigma classico: navigazione e filtri rigidi}\label{subsec:paradigma_classico}
+
+    L'architettura dell'informazione si definisce come il design strutturale di ambienti informativi finalizzato a plasmare l'usabilità e la trovabilità\cite{Mor08}. Poggia su quattro sistemi interconnessi:
+
+    \begin{enumerate}[label={(\roman*)}]
+        \item sistemi di organizzazione, che categorizzano le informazioni;
+        \item sistemi di etichettatura, che ne determinano la rappresentazione linguistica;
+        \item sistemi di navigazione, che consentono l'orientamento nello spazio;
+        \item sistemi di ricerca, che permettono interrogazioni dirette.
+    \end{enumerate}
+
+    Applicato al Datavault, l'interrogazione tradizionale mediante filtri rigidi o SPARQL presenta tre limiti strutturali:
+
+    \begin{enumerate}
+        \item Pretende conoscenza a priori di stringhe esatte, incompatibile con la ricerca umanistica\hfill\cite{Vas24};
+        \item Non gestisce sinonimia, sfumature e vaghezza del linguaggio naturale;
+        \item Obbliga la formulazione di query multi-criterio in sintassi rigide.
+    \end{enumerate}
+
+    Il risultato è che l'informazione è presente nel database ma l'utente non riesce a trovarla.
+
+    \subsection{Il nuovo paradigma: ricerca semantica con LLM}\label{subsec:paradigma_semantico}
+
+    Un LLM cambia il modo di esplorare i dati semantici: converte il linguaggio naturale in query SPARQL strutturate, agendo come intermediario tra il ricercatore e il triplestore.\@
+
+    Il ricercatore non deve più imparare il linguaggio della macchina: è il sistema che si adatta all'utente. La complessità cognitiva e sintattica passa dall'utente al sistema.
+
+    Questo si lega al concetto di ``findability'' (trovabilità)\cite{Ros07}. Lo scopo del sistema è rendere le risorse trovabili, non solo accessibili, nel momento del bisogno.
+
+    La ricerca semantica mediata dall'LLM aumenta la trovabilità per tre ragioni:
+
+    \begin{itemize}
+        \item abbassa drasticamente la soglia di accesso all'informazione, permettendo a chiunque di fare una domanda diretta al database;
+        \item il modello gestisce in modo nativo la vaghezza, l'ambiguità e i sinonimi intrinseci nel linguaggio umano;
+        \item consente di esprimere bisogni informativi multi-criterio complessi, impossibili da supportare attraverso form a tendina.
+    \end{itemize}
+
+    Il paradigma basato su LLM presenta però sfide note: il rischio di allucinazioni (invenzione di predicati inesistenti), la dipendenza dall'accuratezza del prompt di sistema, e l'elevato costo computazionale delle chiamate ai modelli generativi. Queste metriche verranno analizzate in dettaglio nel \cref{chap:valutazione}.
+
+
+\section{Retrieval-Augmented Generation (RAG) come soluzione tecnologica}\label{sec:rag}
+    \subsection{Il paradigma RAG tradizionale}\label{subsec:rag_trad}
+
+    Retrieval-Augmented Generation (RAG) è un paradigma che combina la potenza dei modelli generativi con l'affidabilità del recupero di informazioni da fonti strutturate. La struttura di base è semplice ma efficace:
+
+    \begin{enumerate}
+        \item \textbf{Ingresso}: l'utente pone una domanda in linguaggio naturale;
+        \item \textbf{Retrieval}: un modulo di ricerca estrae documenti o frammenti rilevanti da una base di conoscenza strutturata;
+        \item \textbf{Augmentation}: il contesto recuperato viene fornito al modello generativo come ``prompt esteso'';
+        \item \textbf{Generation}: il modello generativo produce una risposta grounded nei documenti recuperati, riducendo le allucinazioni.
+    \end{enumerate}
+
+    Il modello è vincolato a operare all'interno di uno spazio di conoscenza ben definito, il che riduce il rischio di allucinazioni.
+
+    \subsection{RAG applicato a Knowledge Graphs}\label{subsec:rag_kg}
+
+    Nel nostro caso, il ``corpus'' da cui recuperare informazioni è uno \textbf{schema RDF strutturato}. L'applicazione di RAG a Knowledge Graphs richiede una variante: anziché recuperare documenti di testo, recuperiamo \textit{frammenti di schema}, \textit{esempi di predicati}, e \textit{descrizioni di ontologie}.
+
+    Quindi il flusso diventa:
+
+    \begin{enumerate}
+        \item \textbf{Ingresso}: domanda dell'utente (es.\ ``Mostrami tutte le immagini digitalizzate con una Nikon nel 2022'');
+        \item \textbf{Retrieval}: il sistema accede allo schema RDF del Datavault e recupera i predicati rilevanti (es.\ \code{exif:make}, \code{exif:dateTime});
+        \item \textbf{Augmentation}: lo schema e gli esempi di predicati vengono forniti al modello Quenya come parte del prompt di sistema;
+        \item \textbf{Generation}: il modello Quenya produce una query SPARQL coerente con lo schema;
+        \item \textbf{Esecuzione}: la query viene eseguita su Blazegraph e i risultati vengono restituiti all'utente.
+    \end{enumerate}
+
+    Il risultato combina la flessibilità del linguaggio naturale con l'affidabilità di una fonte strutturata.
+
+    \subsection{Fine-tuning e LoRA per Domain Adaptation}\label{subsec:finetune_lora}
+
+    Un miglioramento ulteriore consiste nel fine-tuning del modello LLM su un dataset specifico del dominio. Anziché usare un LLM generico, possiamo adattare un modello più piccolo (es.\ \code{Phi-3-mini}) a generare query SPARQL corrette per il Datavault specifico.
+
+    Tecniche come LoRA (\textit{Low-Rank Adaptation}) permettono un fine-tuning efficiente senza memorizzare l'intero modello in memoria. Il modello apprende:
+
+    \begin{enumerate}
+        \item La sintassi SPARQL corretta per il Datavault;
+        \item L'ontologia specifica (predicati, tipi di dato, convenzioni di naming);
+        \item Strategie di generazione robuste (evitare predicati inesistenti, gestire date, etc.);
+        \item Quando e come segnalare query out-of-domain.
+    \end{enumerate}
+
+    Questo riduce il rischio di allucinazioni e migliora l'accuratezza della generazione.
+
+\section{Conclusioni del capitolo}\label{sec:conclusioni_cap2}
+In questo capitolo abbiamo analizzato il contesto scientifico e tecnologico alla base del lavoro:
+    \begin{enumerate}
+        \item Gli approcci tradizionali (SPARQL nudo, filtri rigidi) falliscono nel dominio umanistico perché impongono barriere cognitive, strutturali e pratiche;
+        \item I modelli teorici dell'architettura dell'informazione (berrypicking, precision e recall, carico cognitivo) giustificano il ricorso a un'interfaccia conversazionale mediata da LLM;\@
+        \item Le tecnologie emergenti (RAG, fine-tuning con LoRA) rendono possibile un'implementazione affidabile e accurata di tale interfaccia.
+    \end{enumerate}
+
+    Il \cref{chap:prototipo} presenta nel concreto il Quenya Query Builder: il dominio di applicazione (DH.ARC e il Datavault), il profilo degli utenti target, l'architettura funzionale del sistema, e i casi d'uso che ne dimostrano il valore nel contesto umanistico.
