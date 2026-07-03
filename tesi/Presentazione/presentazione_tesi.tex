@@ -1,12 +1,405 @@
 % Presentazione della Tesi
-\documentclass{beamer}
+\documentclass[10pt,aspectratio=169]{beamer}
+
+% Tema e Colori
+\usetheme{Madrid}
+\usecolortheme{default}
+
+% Nuova Palette Scienze (Verde, Panna, Bianco, Verdeacqua, Blu)
+\definecolor{ScienzeGreen}{RGB}{0, 102, 68}
+\definecolor{Panna}{RGB}{248, 245, 235}
+\definecolor{VerdeAcqua}{RGB}{0, 153, 153}
+\definecolor{BluAccento}{RGB}{0, 92, 138}
+\definecolor{UniboGray}{RGB}{100, 100, 100}
+\definecolor{HumanitiesWhite}{RGB}{255, 255, 255}
+
+% Impostazioni Beamer per i colori
+\setbeamercolor{background canvas}{bg=Panna}
+\setbeamercolor{structure}{fg=ScienzeGreen}
+\setbeamercolor{palette primary}{bg=ScienzeGreen,fg=white}
+\setbeamercolor{palette secondary}{bg=BluAccento,fg=white}
+\setbeamercolor{palette tertiary}{bg=VerdeAcqua,fg=white}
+\setbeamercolor{palette quaternary}{bg=ScienzeGreen,fg=white}
+
+% Modifica dei blocchi
+\setbeamercolor{block title}{bg=ScienzeGreen, fg=white}
+\setbeamercolor{block body}{bg=white, fg=black}
+\setbeamercolor{block title alerted}{bg=BluAccento, fg=white}
+\setbeamercolor{block body alerted}{bg=white, fg=black}
+
+% Pacchetti
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[italian]{babel}
+\usepackage{graphicx}
+\usepackage{fontawesome5}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.symbols, arrows.meta, positioning, calc, fit, backgrounds, mindmap}
+
+% Metadati
+\title[Quenya: NL to SPARQL]{Quenya: un traduttore da linguaggio naturale \\ a query per Blazegraph}
+\subtitle{Corso di Laurea in Informatica}
+\author[Alberto Zuccari]{Alberto Zuccari}
+\institute[Unibo]{
+    Dipartimento di Informatica Scienza e Ingegneria \\
+    Università di Bologna
+}
+\date[I Sessione 2026]{Anno Accademico 2025/2026}
 
 \begin{document}
 
-\title{Presentazione della Tesi}
-\author{Autore}
-\date{\today}
+% SLIDE 1: FRONTESPIZIO
+\begin{frame}
+    \titlepage\vspace{-1cm}
+    \begin{center}
+        \small
+        \begin{tabular}{ll}
+            \textbf{Relatore:} & Chiar.mo~Prof.~Fabio Vitali \\
+            \textbf{Correlatore:} & Chiar.mo~Prof.~Paolo Bonora \\
+        \end{tabular}
+    \end{center}
+\end{frame}
 
-\frame{\titlepage}
+% SLIDE 2: INDICE
+\begin{frame}{Indice}
+    \tableofcontents
+\end{frame}
+
+% ==============================
+\section{Contesto e Motivazione}
+% ==============================
+
+% SLIDE 3
+\begin{frame}{Il dominio: DH.ARC e il Datavault}
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=1.5cm and 2cm,
+            human_node/.style={align=center, text width=3.5cm},
+            db_node/.style={cylinder, shape border rotate=90, draw=ScienzeGreen, thick, fill=ScienzeGreen!20, minimum height=2cm, minimum width=2.2cm, align=center, aspect=0.25},
+            kg_node/.style={cloud, cloud puffs=13, cloud puff arc=120, aspect=2, draw=ScienzeGreen, thick, fill=ScienzeGreen!10, align=center, minimum height=2.5cm, minimum width=4cm, text width=3.5cm}
+        ]
+            % Nodes
+            \node[human_node] (dharc) {{\Huge \textcolor{BluAccento}{\faUsers}} \\[0.2cm] \textbf{DH.ARC}\\Centro Ricerca Umanistica};
+            \node[db_node] (datavault) [right=of dharc] {\textbf{Datavault}};
+            \node[kg_node] (kg) [right=of datavault] {\textbf{Knowledge Graph}\\$\sim$19 Milioni di triple RDF};
+            
+            % Arrows
+            \draw[-{Latex[scale=1.5]}, thick, BluAccento] (dharc) -- (datavault) node[midway, above, font=\scriptsize] {Gestisce};
+            \draw[-{Latex[scale=1.5]}, thick, ScienzeGreen] (datavault) -- (kg) node[midway, above, font=\scriptsize] {Si basa su};
+        \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{columns}
+        \begin{column}{0.45\textwidth}
+            \begin{block}{Il vantaggio dei dati a grafo}
+                Collega tra loro dati culturali di natura molto diversa.
+            \end{block}
+        \end{column}
+        \begin{column}{0.45\textwidth}
+            \begin{alertblock}{Il problema pratico}
+                Per leggerli serve saper scrivere in \textbf{SPARQL}.
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% SLIDE 4
+\begin{frame}{Il problema dell'accessibilità}
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=2.5cm,
+            actor/.style={align=center, text width=3.5cm},
+            barrier/.style={
+                rectangle, 
+                fill=BluAccento, 
+                text=white, 
+                font=\bfseries, 
+                text width=1.8cm, 
+                align=center, 
+                minimum height=4cm, 
+                yslant=-0.2, 
+                transform shape,
+                draw=BluAccento!50!black, thick,
+                rounded corners=1pt
+            },
+            db/.style={cylinder, draw=ScienzeGreen, thick, aspect=0.25, fill=ScienzeGreen!20, text width=2.5cm, align=center, shape border rotate=90, minimum height=2.5cm}
+        ]
+            % Nodes
+            \node[actor] (user) {{\Huge \textcolor{BluAccento}{\faUserGraduate}} \\[0.2cm] \textbf{Ricercatore Umanistico}\\(Conosce i dati, ma non sa programmare)};
+            \node[barrier] (wall) [right=of user] {BARRIERA\\SPARQL};
+            
+            % Draw 3D thickness for the wall
+            \begin{scope}[on background layer]
+                \fill[BluAccento!60!black] (wall.north east) -- ++(0.3,0.3) -- ([xshift=0.3cm, yshift=0.3cm]wall.south east) -- (wall.south east) -- cycle;
+                \fill[BluAccento!80!black] (wall.north west) -- ++(0.3,0.3) -- ([xshift=0.3cm, yshift=0.3cm]wall.north east) -- (wall.north east) -- cycle;
+            \end{scope}
+
+            \node[db] (data) [right=of wall, xshift=0.5cm] {\textbf{Datavault}\\Dati Culturali};
+            
+            % Lines
+            \draw[->, thick, dashed, BluAccento] (user.east) -- (wall.west |- user.east) node[midway, above, font=\scriptsize, text=black] {Cerca dati};
+            \draw[->, thick, dashed, ScienzeGreen] (wall.east |- user.east) -- (data.west |- user.east) node[midway, above, font=\scriptsize, text=black] {Sintassi rigida};
+        \end{tikzpicture}
+    \end{center}
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item \textbf{I classici filtri non bastano:} Le classiche interfacce a menu o a filtri limitano le vere potenzialità del grafo.
+        \item \textbf{Cosa serve:} Un modo per fare ricerche complesse in libertà, scrivendo come si parla.
+    \end{itemize}
+\end{frame}
+
+% ==============================
+\section{Obiettivo del Progetto}
+% ==============================
+
+% SLIDE 5
+\begin{frame}{Obiettivo: Quenya}
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=1.5cm and 2.5cm,
+            nl/.style={rectangle, draw=BluAccento, thick, fill=HumanitiesWhite, text width=3.5cm, align=center, rounded corners, minimum height=1.5cm},
+            quenya/.style={ellipse, draw=ScienzeGreen, thick, fill=ScienzeGreen, text=white, font=\Large\bfseries, minimum width=3cm, minimum height=2cm, align=center},
+            sparql/.style={rectangle, draw=VerdeAcqua, thick, fill=VerdeAcqua!20, text width=3.5cm, align=center, rounded corners, minimum height=1.5cm}
+        ]
+            
+            \node[nl] (input) {"Quali manoscritti del XIV secolo sono digitalizzati?"};
+            \node[quenya] (core) [right=of input] {Quenya};
+            \node[sparql] (output) [right=of core] {\texttt{SELECT ?m WHERE \{... \}}};
+            
+            \draw[-{Latex[scale=1.2]}, thick] (input) -- (core) node[midway, above, font=\scriptsize] {Domanda Naturale};
+            \draw[-{Latex[scale=1.2]}, thick] (core) -- (output) node[midway, above, font=\scriptsize] {Query Eseguibile};
+        \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{columns}[T]
+        \begin{column}{0.3\textwidth}
+            \begin{block}{1. Affidabilità}
+                Capire davvero cosa sta cercando l'utente.
+            \end{block}
+        \end{column}
+        \begin{column}{0.3\textwidth}
+            \begin{block}{2. Nessun errore}
+                Bloccare le allucinazioni del modello prima che arrivino al database.
+            \end{block}
+        \end{column}
+        \begin{column}{0.3\textwidth}
+            \begin{block}{3. Esperienza d'uso}
+                Una semplice barra di ricerca, senza complicazioni.
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ==============================
+\section{Architettura e Tecnologie}
+% ==============================
+
+% SLIDE 6
+\begin{frame}{Come è fatto il sistema}
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=1.5cm and 1.5cm,
+            ui/.style={rectangle, draw=BluAccento, thick, fill=HumanitiesWhite, text width=2.5cm, align=center, rounded corners, minimum height=1.5cm},
+            backend/.style={rectangle, draw=ScienzeGreen, thick, fill=ScienzeGreen!10, text width=3cm, align=center, rounded corners, minimum height=2.5cm},
+            llm/.style={rectangle, draw=VerdeAcqua, thick, fill=VerdeAcqua!20, text width=2.5cm, align=center, rounded corners, minimum height=1.5cm},
+            db/.style={cylinder, draw=UniboGray, thick, aspect=0.25, fill=UniboGray!20, text width=2cm, align=center, shape border rotate=90, minimum height=2cm}
+        ]
+            
+            \node[ui] (frontend) {\textbf{Frontend}\\Barra di Ricerca};
+            \node[backend] (orchestrator) [right=2cm of frontend] {\textbf{Backend}\\Controllo e Gestione};
+            \node[llm] (model) [above right=0.2cm and 1.5cm of orchestrator] {\textbf{Modello LLM}\\(Fine-tuned)};
+            \node[db] (blazegraph) [below right=0.2cm and 1.5cm of orchestrator] {\textbf{Blazegraph}\\Database RDF};
+            
+            \draw[{Latex}-{Latex}, thick] (frontend) -- (orchestrator) node[midway, above, font=\scriptsize] {Query / Risultato};
+            \draw[{Latex}-{Latex}, thick] (orchestrator) -| (model) node[near start, above left, font=\scriptsize] {Prompt / SPARQL};
+            \draw[{Latex}-{Latex}, thick] (orchestrator) -| (blazegraph) node[near start, below left, font=\scriptsize] {Query / Risultato};
+        \end{tikzpicture}
+    \end{center}
+\end{frame}
+
+% SLIDE 7
+\begin{frame}{Il Motore LLM: Efficienza con LoRA}
+    \begin{center}
+        \begin{tikzpicture}[
+            scale=0.9, transform shape,
+            box/.style={rectangle, draw=UniboGray, thick, fill=HumanitiesWhite, text width=4.5cm, align=center, rounded corners, minimum height=3cm}
+        ]
+            \node[box, draw=UniboGray!50, opacity=0.6] (generic) {
+                \textbf{\textcolor{gray}{I grandi modelli API (es. ChatGPT)}}\\
+                \vspace{0.2cm}
+                \small
+                - Lenti e costosi\\
+                - Non conoscono il nostro database specifico\\
+                - Tendono a inventare sintassi (allucinazioni)
+            };
+            
+            \node[box, draw=ScienzeGreen, thick, right=1.5cm of generic, fill=ScienzeGreen!5] (lora) {
+                \textbf{\textcolor{ScienzeGreen}{Quenya (LoRA Fine-tuning)}}\\
+                \vspace{0.2cm}
+                \small
+                - Modello locale e leggero\\
+                - Adattato usando l'algoritmo LoRA\\
+                - Addestrato esattamente sui dati del Datavault
+            };
+            
+            \draw[-{Latex[scale=1.5]}, thick, ScienzeGreen] (generic) -- (lora) node[midway, above, font=\footnotesize, text=black] {La scelta};
+        \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{quote}
+        \centering
+        \textit{"L'uso di LoRA ci ha permesso di ottenere prestazioni altissime su un problema molto specifico, senza dover usare server enormi."}
+    \end{quote}
+\end{frame}
+
+% SLIDE 8
+\begin{frame}{Risolvere il problema delle allucinazioni}
+    \begin{center}
+        \begin{tikzpicture}[
+            node distance=1.5cm and 2cm,
+            danger/.style={rectangle, draw=BluAccento, thick, fill=BluAccento!10, text width=3cm, align=center, rounded corners},
+            safe/.style={rectangle, draw=VerdeAcqua, thick, fill=VerdeAcqua!20, text width=3cm, align=center, rounded corners},
+            schema/.style={rectangle, draw=ScienzeGreen, thick, fill=ScienzeGreen!10, text width=4cm, align=center, rounded corners}
+        ]
+            
+            \node[danger] (hallu) {\textbf{Il rischio:}\\Il modello inventa proprietà che non esistono nel database};
+            \node[schema] (constraint) [right=of hallu] {\textbf{Generazione Vincolata}\\Forziamo l'IA a pescare solo dal vocabolario ufficiale del Datavault};
+            \node[safe] (solution) [right=of constraint] {\textbf{Il risultato:}\\Le query generate non vanno in errore di sintassi};
+            
+            \draw[-{Latex[scale=1.2]}, thick] (hallu) -- (constraint);
+            \draw[-{Latex[scale=1.2]}, thick] (constraint) -- (solution);
+        \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{block}{Difesa a livello di Backend}
+        Il backend controlla ogni riga scritta dal modello. Se l'IA esce dal tracciato, la query viene scartata o corretta automaticamente, in modo trasparente per l'utente.
+    \end{block}
+\end{frame}
+
+% ==============================
+\section{Valutazione}
+% ==============================
+
+% SLIDE 9
+\begin{frame}{Come abbiamo valutato il sistema}
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{center}
+            \begin{tikzpicture}
+                \node[cylinder, draw=ScienzeGreen, thick, aspect=0.25, fill=ScienzeGreen!20, minimum height=3cm, minimum width=2.5cm, shape border rotate=90, align=center] (dataset) {Tutti i test};
+                \draw[thick, ScienzeGreen, -Latex] (1.5, 0.8) -- (2.7, 1.8) node[right, align=left, text=black] {\textbf{Dati di training}\\(Visti in fase di addestramento)};
+                \draw[thick, VerdeAcqua, -Latex] (1.5, -0.8) -- (2.7, -1.8) node[right, align=left, text=black] {\textbf{Test Set}\\(Dati tenuti nascosti per la validazione)};
+            \end{tikzpicture}
+            \end{center}
+        \end{column}
+        
+        \begin{column}{0.5\textwidth}
+            \textbf{Cosa abbiamo misurato:}
+            \begin{itemize}
+                \item \textbf{Efficacia:} Precision, Recall e F1-Score sulle risposte.
+                \item \textbf{Efficienza:} Percentuale di query eseguite con successo e tempi di attesa.
+            \end{itemize}
+            \vspace{0.5cm}
+            \textbf{Tipi di query testate:}
+            \begin{itemize}
+                \item Ricerche semplici per parola chiave.
+                \item Combinazioni di più filtri (date, attributi).
+                \item Relazioni complesse tra nodi del grafo.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% SLIDE 10
+\begin{frame}{Risultati Ottenuti}
+    \begin{center}
+        \begin{tikzpicture}[
+            box/.style={circle, draw=ScienzeGreen, thick, fill=ScienzeGreen!10, text width=2.5cm, align=center, inner sep=0pt, minimum size=3cm}
+        ]
+            \node[box] (exec) at (0,0) {\Huge \textbf{Alta} \\ \small Accuratezza};
+            \node[box, fill=VerdeAcqua!20, draw=VerdeAcqua] (lat) at (4,0) {\Huge \textbf{Bassa} \\ \small Latenza};
+            \node[box, fill=BluAccento!10, draw=BluAccento] (zero) at (8,0) {\Huge \textbf{Zero} \\ \small Errori Sintattici};
+        \end{tikzpicture}
+    \end{center}
+    
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item \textbf{Navigare il grafo:} LLM e Validatore riescono a districarsi bene anche tra relazioni RDF molto frammentate.
+        \item \textbf{Uso reale:} Il modello risponde in tempi che l'utente percepisce come naturali durante la navigazione web.
+        \item \textbf{Competitività:} Su questo problema specifico, il nostro modello compatto e specializzato regge tranquillamente il confronto con modelli commerciali molto più grandi.
+    \end{itemize}
+\end{frame}
+
+% ==============================
+\section{Conclusioni e Sviluppi}
+% ==============================
+
+% SLIDE 11
+\begin{frame}{Lavori Futuri}
+    \begin{center}
+        \begin{tikzpicture}[
+            mindmap,
+            every node/.style={concept, execute at begin node=\hskip0pt},
+            root concept/.append style={concept color=ScienzeGreen, fill=ScienzeGreen, line width=1ex, text=white, font=\large\bfseries},
+            text=black,
+            concept color=VerdeAcqua!30,
+            grow cyclic,
+            level 1/.append style={level distance=3.5cm, sibling angle=120, font=\small\bfseries}
+        ]
+            \node[root concept] {Sviluppi Futuri}
+                child { node {Chat} 
+                    child[concept color=VerdeAcqua!15, font=\footnotesize, level distance=2.5cm] { node {Più turni di dialogo} }
+                    child[concept color=VerdeAcqua!15, font=\footnotesize, level distance=2.5cm] { node {Chiarire query ambigue} }
+                }
+                child[concept color=BluAccento!30] { node {Lingue} 
+                    child[concept color=BluAccento!15, font=\footnotesize, level distance=2.5cm] { node {Supporto per l'Inglese} }
+                }
+                child[concept color=ScienzeGreen!30] { node {Complessità} 
+                    child[concept color=ScienzeGreen!15, font=\footnotesize, level distance=2.5cm] { node {Federated SPARQL} }
+                    child[concept color=ScienzeGreen!15, font=\footnotesize, level distance=2.5cm] { node {Query geospaziali} }
+                };
+        \end{tikzpicture}
+    \end{center}
+\end{frame}
+
+% SLIDE 12
+\begin{frame}{In conclusione}
+    \begin{columns}
+        \begin{column}{0.2\textwidth}
+            \begin{center}
+                \begin{tikzpicture}
+                    \node[star, star points=5, star point ratio=2.2, draw=ScienzeGreen, thick, fill=ScienzeGreen!20, minimum size=2cm] {};
+                \end{tikzpicture}
+            \end{center}
+        \end{column}
+        \begin{column}{0.75\textwidth}
+            \begin{block}{Dati per tutti}
+                Chi studia materie umanistiche non ha più bisogno di imparare linguaggi formali per accedere ai dati culturali.
+            \end{block}
+            \begin{block}{Efficienza su misura}
+                Aver usato una tecnica come LoRA dimostra che non servono i supercomputer per risolvere in modo eccellente un problema di dominio.
+            \end{block}
+            \begin{block}{Pronto all'uso}
+                L'intero patrimonio del DH.ARC diventa interrogabile come se fosse un normale motore di ricerca.
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% SLIDE 13: CONCLUSIONE E DOMANDE
+\begin{frame}[plain]
+    \begin{center}
+        \Huge \textbf{\textcolor{ScienzeGreen}{Grazie per l'attenzione!}} \\
+        \vspace{1.5cm}
+        \large \textbf{\textcolor{BluAccento}{Quenya: un traduttore da linguaggio naturale a query per Blazegraph}} \\
+        \vspace{0.5cm}
+        \normalsize Alberto Zuccari
+    \end{center}
+\end{frame}
 
 \end{document}

@@ -35,6 +35,7 @@
                 \textit{``Mostrami tutti i manoscritti attribuiti a un determinato autore e digitalizzati nell'ultimo anno''.}
             \end{quote}
 
+% \newpage
 \section{Architettura Funzionale e Interfaccia Utente}\label{sec:architettura}
 
     \subsection{L'interfaccia: come si usa il Data Vault Explorer}\label{subsec:interfaccia}
@@ -44,7 +45,7 @@
 
         \begin{figure}[H]
             \centering
-            \includegraphics[width=0.9\textwidth]{img/schermata_principale.png}
+            \includegraphics[width=\textwidth]{img/schermata_principale.png}
             \caption{L'interfaccia principale del Data Vault Explorer con la Quenya Search Bar.}\label{fig:schermata_principale}
         \end{figure}
 
@@ -52,34 +53,39 @@
 
     \subsection{Il flusso dell'interazione}\label{subsec:flusso}
 
-        Dal punto di vista dell'utente, l'interazione con il sistema si articola secondo un flusso strutturato, progettato per astrarre la complessità tecnica sottostante. Questo processo è schematizzato nella Figura~\ref{fig:flusso_interazione}.
+        % \begin{figure}[htbp]
+        %     \centering
+        %     \begin{minipage}[c]{0.17\textwidth}
+                Dal punto di vista dell'utente, l'interazione con il sistema si articola secondo un flusso strutturato, progettato per astrarre la complessità tecnica sottostante. Questo processo è schematizzato nello schema a fianco.
+            % \end{minipage}%
+            % \hfill
+            \begin{figure}[htbp]
+                \centering
+                \begin{tikzpicture}[
+                    node distance=1.3cm,
+                    box/.style={draw=black!70, rectangle, rounded corners, minimum width=5cm, minimum height=1.1cm, align=center, fill=black!5, font=\small},
+                    arrow/.style={-Latex, thick, draw=black!70}
+                ]
 
-        \begin{figure}[htbp]
-            \centering
-            \begin{tikzpicture}[
-                node distance=1.5cm,
-                box/.style={draw=black!70, rectangle, rounded corners, minimum width=6cm, minimum height=1.2cm, align=center, fill=black!5, font=\small},
-                arrow/.style={-Latex, thick, draw=black!70}
-            ]
+                % Nodi del diagramma
+                \node[box] (input) {\textbf{1. Input dell'Utente}\\Domanda in linguaggio naturale};
+                \node[box, below=of input] (llm) {\textbf{2. Elaborazione Semantica (LLM)}\\Traduzione dell'intento basata sull'ontologia};
+                \node[box, below=of llm] (db) {\textbf{3. Esecuzione SPARQL}\\Interrogazione diretta su Blazegraph};
+                \node[box, below=of db] (output) {\textbf{4. Output dei Risultati}\\Visualizzazione dei dati pertinenti};
 
-            % Nodi del diagramma
-            \node[box] (input) {\textbf{1. Input dell'Utente}\\Domanda in linguaggio naturale};
-            \node[box, below=of input] (llm) {\textbf{2. Elaborazione Semantica (LLM)}\\Traduzione dell'intento basata sull'ontologia};
-            \node[box, below=of llm] (db) {\textbf{3. Esecuzione SPARQL}\\Interrogazione diretta su Blazegraph};
-            \node[box, below=of db] (output) {\textbf{4. Output dei Risultati}\\Visualizzazione dei dati pertinenti};
+                % Frecce con etichette
+                \draw[arrow] (input) -- (llm) node[midway, right, font=\footnotesize\itshape] {Testo non strutturato};
+                \draw[arrow] (llm) -- (db) node[midway, right, font=\footnotesize\itshape] {Query formale generata};
+                \draw[arrow] (db) -- (output) node[midway, right, font=\footnotesize\itshape] {Risultati JSON/RDF};
+                
+                % Freccia di feedback (opzionale, che torna all'utente)
+                \draw[arrow, dashed] (output.west) -- ++(-1.3,0) |- (input.west) node[pos=0.25, left, font=\footnotesize\itshape, align=right] {Esplorazione\\iterativa};
 
-            % Frecce con etichette
-            \draw[arrow] (input) -- (llm) node[midway, right, font=\footnotesize\itshape] {Testo non strutturato};
-            \draw[arrow] (llm) -- (db) node[midway, right, font=\footnotesize\itshape] {Query formale generata};
-            \draw[arrow] (db) -- (output) node[midway, right, font=\footnotesize\itshape] {Risultati JSON/RDF};
-            
-            % Freccia di feedback (opzionale, che torna all'utente)
-            \draw[arrow, dashed] (output.west) -- ++(-1.5,0) |- (input.west) node[pos=0.25, left, font=\footnotesize\itshape, align=right] {Esplorazione\\iterativa};
-
-            \end{tikzpicture}
+                \end{tikzpicture}
+       
             \caption{Schema del flusso di interazione tra utente, Quenya Query Builder e Datavault.}\label{fig:flusso_interazione}
         \end{figure}
-
+\newpage
         Come illustrato nello schema, le fasi del processo sono le seguenti:
         \begin{enumerate}
             \item \textbf{Input}: l'utente digita il proprio bisogno informativo in italiano in forma libera. In questa fase non vi sono campi strutturati da compilare né regole di sintassi da rispettare.

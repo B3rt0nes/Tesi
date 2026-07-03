@@ -3,11 +3,7 @@
 Questo capitolo tira le fila del progetto, tracciando un bilancio: cosa il sistema realizza in modo affidabile, dove mostra il fianco, e perché rappresenti comunque un passo avanti rispetto all'assenza di un motore di ricerca semantico per il Datavault.
 La sezione finale organizza gli sviluppi futuri per priorità: dai correttivi immediati fino alle esplorazioni più ambiziose.
 
-% =============================================================================
-\section{Analisi critica del sistema}\label{sec:orgoglio_modestia}
-% =============================================================================
-
-\subsection{Risultati ottenuti e punti di forza}\label{subsec:punti_forza}
+\textbf{Analisi critica del sistema} (\textbf{Risultati ottenuti e punti di forza}):\label{sec:orgoglio_modestia}
 
 \subsubsection{Affidabilità sintattica}
 
@@ -29,9 +25,7 @@ L'intera pipeline di addestramento è stata condotta impiegando hardware accessi
 
 Il system prompt usato per generare il dataset è lo stesso, riga per riga, inserito nel backend di inferenza (\cref{subsec:regole}). Questa identità scongiura una criticità diffusa: il \textit{train-serve skew}, ovvero il disallineamento tra i prompt visti dal modello in addestramento e quelli inviati in produzione.
 
-\subsection{Limiti del sistema e criticità}\label{subsec:punti_modestia}
-
-\subsubsection{Limiti della valutazione rispetto agli scenari d'uso reale}
+\textbf{Limiti del sistema e criticità: Limiti della valutazione rispetto agli scenari d'uso reale}
 
 Come discusso nel \cref{subsec:nota_critica}, la valutazione quantitativa fotografa l'accuratezza del modello su formati già visti in training. Non sappiamo se l'assistente si dimostrerà altrettanto abile nell'interpretare domande spontanee da parte di ricercatori estranei alle 13 categorie (\cref{subsec:dataset_gen}). Manca all'appello un vero stress test: l'interazione sul campo con utenti DH.ARC.\@
 
@@ -51,19 +45,18 @@ Il backend di produzione esegue l'inferenza su CPU (\cref{subsec:fastapi}), ment
 
 Il limite di 1024 token in \code{max\_seq\_length} (\cref{subsec:hyperparams}), scelto per contenere l'uso di memoria durante il training, potrebbe risultare insufficiente per domande particolarmente articolate o per un futuro ampliamento del system prompt (ad esempio se si aggiungessero più predicati o esempi few-shot nel prompt stesso).
 
-\subsection{Impatto e prospettive nel dominio umanistico}\label{subsec:giustificazione}
+\textbf{Impatto e prospettive nel dominio umanistico}\label{subsec:giustificazione}
 
 Rispetto allo scenario precedente, in cui l'esplorazione del Datavault richiedeva obbligatoriamente la scrittura manuale di SPARQL (\cref{subsec:tre_barriere}), l'interfaccia realizzata trasforma un'operazione preclusa agli umanisti in un'attività fluida. Pur coi suoi limiti, il tool offre una soluzione percorribile a un problema finora irrisolto.
 
 % Il punto qualificante non è l'assenza di errori nella valutazione fin qui condotta (come discusso in \cref{subsec:nota_critica}, quella valutazione ha una portata limitata), ma la trasparenza con cui i limiti sono stati identificati e documentati. Un sistema che dichiara i propri confini con questo livello di dettaglio è più utile, e più onesto, di uno che sbandiera performance non qualificate metodologicamente.
 
-% =============================================================================
 \section{Sviluppi futuri}\label{sec:sviluppi_futuri}
 % =============================================================================
 
 Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug fix più urgenti alle estensioni più ambiziose.
 
-\subsection{Bug fix}\label{subsec:bugfix}
+\textbf{Bug fix}\label{subsec:bugfix}
 
 \begin{enumerate}
     \item \textbf{Estendere la valutazione alle categorie mancanti}: eseguire la Fase 1/Fase 2 della pipeline di valutazione (\cref{sec:metodologia}) su un campione che includa esplicitamente le categorie non rappresentate nel test set attuale (negazione, OR tra formati, paginazione custom, ricerca per uploader), per verificare se il tasso di esecuzione corretta del 100\% si mantiene anche lì.
@@ -71,7 +64,7 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
     \item \textbf{Misurare i tempi di inferenza reali su CPU}: eseguire un benchmark diretto sul backend di produzione, sostituendo la stima qualitativa attuale (\cref{subsec:tempo_generazione}) con un dato misurato.
 \end{enumerate}
 
-\subsection{Feature mancanti}\label{subsec:feature_mancanti}
+\textbf{Feature mancanti}\label{subsec:feature_mancanti}
 
 \begin{enumerate}
     \item \textbf{Un vero test di usabilità con utenti reali}: come discusso in \cref{subsec:miglioramento}, manca ancora una misura empirica del vantaggio percepito da un ricercatore umanista reale, sia in termini di tempo risparmiato sia di soddisfazione d'uso rispetto all'assenza di alternative.
@@ -79,7 +72,7 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
     \item \textbf{Un'interfaccia di correzione della query generata}: per gli utenti più esperti, permettere una modifica diretta della query SPARQL proposta dal sistema (già visualizzabile, si veda \cref{subsec:tre_layer}) prima dell'esecuzione, chiudendo il cerchio tra automazione e controllo manuale.
 \end{enumerate}
 
-\subsection{Estensioni fondamentali}\label{subsec:estensioni_fondamentali}
+\textbf{Estensioni fondamentali}\label{subsec:estensioni_fondamentali}
 
 \begin{enumerate}
     \item \textbf{Ampliare la copertura semantica dello schema}: le 13 categorie attuali (\cref{subsec:dataset_gen}) coprono i pattern di ricerca più comuni rispetto all'attuale popolazione del Datavault, ma lo schema RDF contiene predicati non ancora sfruttati (ad esempio quelli PREMIS relativi alla dimensione dei file, o le relazioni RDFS di sottoclasse osservate nello schema). Un'estensione del dataset generativo potrebbe abilitare interrogazioni oggi non supportate.
@@ -87,7 +80,7 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
     \item \textbf{Inferenza su GPU in produzione}: sostituire l'attuale deployment su CPU (\cref{subsec:fastapi}) con un'infrastruttura GPU dedicata, per ridurre i tempi di risposta percepiti dall'utente finale a un livello compatibile con un'interazione conversazionale fluida.
 \end{enumerate}
 
-\subsection{Possibili sviluppi futuri}\label{subsec:sviluppi_futuri}
+\textbf{Possibili sviluppi futuri}\label{subsec:sviluppi_futuri}
 
 \begin{enumerate}
     \item \textbf{Ricerca per contenuto visivo, non solo per metadati}: l'intero sistema attuale opera sui metadati EXIF, Dublin Core ed EBUCore associati alle immagini, non sul loro contenuto visivo. Un'estensione di grande ambizione sarebbe l'integrazione di modelli di visione (ad esempio embedding CLIP-like) che permettano domande come ``mostrami le immagini che raffigurano una miniatura con un drago'', andando oltre la ricerca per attributi tecnici o descrittivi verso una vera ricerca per concetto visivo, in piena coerenza con la visione di ``findability'' discussa nel \cref{chap:contesto}.
@@ -95,10 +88,7 @@ Gli sviluppi futuri sono organizzati in ordine di priorità decrescente: dai bug
     \item \textbf{Apprendimento continuo dal feedback degli utenti}: un meccanismo di active learning che raccolga le correzioni manuali degli utenti esperti (si veda il punto sull'interfaccia di correzione, \cref{subsec:feature_mancanti}) per arricchire iterativamente il dataset di training e migliorare il modello nel tempo, senza richiedere una nuova generazione sintetica da zero.
 \end{enumerate}
 
-% =============================================================================
-\newpage
-\section{In sintesi}\label{sec:conclusioni_finali}
-% =============================================================================
+\subsubsection{In sintesi}\label{sec:conclusioni_finali}
 
 Il Datavault di DH.ARC contiene milioni di triple RDF, ma finora non offriva un'esplorazione agnostica a SPARQL.\@ Quenya traduce domande in linguaggio naturale in interrogazioni valide, operando tramite un modello linguistico compatto affinato appositamente per questo archivio.
 

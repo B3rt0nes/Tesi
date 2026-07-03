@@ -221,10 +221,10 @@ Nelle prime fasi di validazione avevamo registrato un tasso di errore significat
 Durante l'analisi della distribuzione dei predicati nel triplestore di produzione è emerso che il namespace EXIF effettivamente presente in Blazegraph è malformato: \url{http://wwww3org/...}, anziché lo standard \url{http://www.w3.org/...} (mancano i due punti e il prefisso \code{www.} corretto). Il bug è stato confermato eseguendo una query SPARQL di verifica diretta sull'endpoint:
 \vspace{0.25cm}
 \begin{lstlisting}[language=sparql, caption=Query di verifica del namespace EXIF reale]
-SELECT DISTINCT ?p WHERE {
-  ?s ?p ?o .
-  FILTER(CONTAINS(STR(?p), "exif")) 
-} LIMIT 5
+  SELECT DISTINCT ?p WHERE {
+    ?s ?p ?o .
+    FILTER(CONTAINS(STR(?p), "exif")) 
+  } LIMIT 5
 \end{lstlisting}
 % \newpage
 \paragraph{Impatto del bug.} Questo mismatch invalida a cascata le interrogazioni: qualunque query SPARQL basata sul namespace EXIF \textit{canonico} restituisce zero risultati per i predicati EXIF, a prescindere dalla sua validità logica. Poiché tali predicati coprono gran parte delle risorse del Datavault, il difetto comprometteva la maggior parte dei casi d'uso del sistema.
