@@ -311,23 +311,22 @@
 
 \restoregeometry\newpage
 
-% \begin{center}
-%     (DA FARE ALLA FINE)\\
-%     5 parole chiave per caratterizzare il contenuto della dissertazione:
-% \end{center}
+\begin{center}
+    5 parole chiave che caratterizzano il contenuto della dissertazione:
+\end{center}
 
-% \begin{tikzpicture}[overlay,remember picture,shift=(current page.center)]
-% \pgfmathsetseed{3}
-% \foreach [count=\count] \word in {Parola 1, parola 2, parola 3, parola 4, parola 5} {
-% \node [
-%     xshift={(mod(\count,3)-1)*(\paperwidth/4)},
-%     yshift={(mod(\count,7)-3)*(\paperwidth/6)},
-%     xshift=rand*4cm,
-%     yshift=rand*2cm,
-%     font=\large] {\word};
-% }
-% \end{tikzpicture}
-% \newpage
+\begin{tikzpicture}[overlay,remember picture,shift=(current page.center)]
+\pgfmathsetseed{3}
+\foreach [count=\count] \word in {Text-to-SPARQL, Knowledge Graph, LLM, Fine-tuning, Natural Language Processing} {
+\node [
+    xshift={(mod(\count,3)-1)*(\paperwidth/4)},
+    yshift={(mod(\count,7)-3)*(\paperwidth/6)},
+    xshift=rand*4cm,
+    yshift=rand*2cm,
+    font=\large] {\word};
+}
+\end{tikzpicture}
+\newpage
 
 
 % DEDICA
@@ -357,31 +356,40 @@ A livello metodologico, il progetto implementa il fine-tuning di un modello ling
 
 La validazione quantitativa, condotta misurando \textit{precision} e \textit{recall} su un test set \textit{held-out}, ha registrato un'accuratezza sintattica ed esecutiva ottimale per le categorie di ricerca addestrate. I risultati confermano che un modello di piccole dimensioni, se opportunamente vincolato al proprio dominio, può abbattere la barriera tecnica d'accesso agli archivi semantici complessi.
 
+% L'interrogazione dei database RDF richiede abitualmente competenze tecniche specialistiche, prima fra tutte la padronanza del linguaggio formale SPARQL. Per i ricercatori in ambito umanistico, questa barriera rappresenta spesso un ostacolo nell'esplorazione del patrimonio informativo.
+% Questa tesi documenta lo sviluppo di "Quenya", un'interfaccia intelligente costruita per il Datavault del centro di ricerca DH.ARC. Il repository ospita circa 19 milioni di triple RDF, un volume di dati difficilmente navigabile senza strumenti tecnici. Il sistema sviluppato traduce domande in linguaggio naturale direttamente in query SPARQL eseguibili, aggirando la rigidità strutturale del database a grafo.
+% A livello metodologico, il progetto implementa il fine-tuning di un modello linguistico compatto (attraverso l'algoritmo LoRA) combinandolo con un'architettura che vincola l'output allo schema ontologico del Datavault. Questo accorgimento previene in modo strutturale le allucinazioni sintattiche tipiche dei Large Language Models. Dal punto di vista dell'utente, l'interazione avviene tramite una singola barra di ricerca, mentre un backend difensivo gestisce in modo invisibile la traduzione e l'interrogazione dell'endpoint Blazegraph.
+% La validazione quantitativa, condotta misurando precision e recall su un test set held-out, ha registrato un'accuratezza sintattica ed esecutiva ottimale per le categorie di ricerca addestrate. I risultati confermano che un modello di piccole dimensioni, se opportunamente vincolato al proprio dominio, può abbattere la barriera tecnica d'accesso agli archivi semantici complessi.
 
 % INDICI
 
 \topmargin=-1cm
+% \vspace{-28pt}
 \tableofcontents
-\thispagestyle{empty}
 
-\clearpage
-\pagestyle{empty}
+\newpage
 \begingroup
-\let\clearpage\relax
-\let\cleardoublepage\relax
-\let\newpage\relax
+    \let\cleardoublepage\relax
 
-\listoffigures
-% \vspace*{1cm}
-\listoftables
-% \vspace*{1cm}
-\lstlistoflistings\endgroup
+    \clearpage
+    \phantomsection\addtocontents{toc}{\vspace{-42pt}}
+    \addcontentsline{toc}{chapter}{Elenco delle figure}
+    \listoffigures
 
+    \clearpage
+    \phantomsection\addcontentsline{toc}{chapter}{Elenco delle tabelle}
+    \listoftables
+    
+    \clearpage
+    \phantomsection\addcontentsline{toc}{chapter}{Elenco delle liste}
+    \lstlistoflistings\endgroup
 \newpage~\newpage
 
 
 % INIZIO CORPO PRINCIPALE
 % Passa alla numerazione araba per i capitoli.
+
+\topmargin=-1cm
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
@@ -429,8 +437,8 @@ La validazione quantitativa, condotta misurando \textit{precision} e \textit{rec
 
 \newpage~\newpage
 \chapter*{Ringraziamenti}
-Mi era rimasta una lattina di Monster ed una notte prima della revisione col prof\dots\\
-Visto che i ringraziamenti sono una cosa personale, e che per chiunque non abbia idea di cosa io abbia scritto/tesato saranno l'unica cosa che andranno a leggere ho pensato di crearvi questo veloce sito dove leggerli.
+Mi era rimasta una lattina di \textit{bevanda energetica generica} ed una notte prima della revisione col prof\dots\\
+Visto che i ringraziamenti sono una cosa personale, e che per chiunque non abbia idea di cosa io abbia scritto saranno l'unica cosa che andranno a leggere ho pensato di crearvi questo veloce sito dove leggerli.
 
 \vspace*{\fill}
 \begin{center}

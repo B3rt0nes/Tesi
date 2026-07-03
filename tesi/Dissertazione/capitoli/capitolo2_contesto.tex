@@ -64,10 +64,10 @@ Analizziamo i principi che giustificano il ricorso a un'interfaccia conversazion
     Un problema critico delle interfacce tradizionali a filtri è l'impossibilità di calibrare dinamicamente il raggio della ricerca. Morville e Rosenfeld spiegano che ogni ricerca è un compromesso matematico tra due metriche inversamente correlate:
 
     \begin{quotation}
-        \begin{align}
-            \var{recall} &= \frac{|\var{doc rilevanti recuperati}|}{|\var{doc nella raccolta}|} \label{eq:recall}\\[5pt]
-            \var{precision} &= \frac{|\var{doc rilevanti recuperati}|}{|\var{doc rilevanti della raccolta}|} \label{eq:precision}
-        \end{align}
+        \begin{align*}
+            \var{recall} &= \frac{|\var{doc rilevanti recuperati}|}{|\var{doc nella raccolta}|}\\[5pt]
+            \var{precision} &= \frac{|\var{doc rilevanti recuperati}|}{|\var{doc rilevanti della raccolta}|}
+        \end{align*}
         ``[\ldots] Non sarebbe bello poter ottenere contemporaneamente elevati valori di recall e precision? Purtroppo non si può avere botte piena e moglie ubriaca: recall e precision sono inversamente correlati''\hfill\cite{Mor08}
     \end{quotation}
 
