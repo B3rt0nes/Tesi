@@ -208,6 +208,23 @@ button {
     font-size: 1.2rem;
     line-height: 1.6;
     font-weight: 300;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+/* Custom scrollbar for ack-box */
+.ack-box::-webkit-scrollbar {
+    width: 6px;
+}
+.ack-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ack-box::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+.ack-box::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
 }
 
 /* State Management */
