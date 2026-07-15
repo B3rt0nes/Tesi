@@ -60,18 +60,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     function parseCSV(csvText) {
-        // Handle both \r\n and \n
-        const lines = csvText.split(/\r?\n/);
-        if (lines.length < 2) return; 
-
-        // Skip header
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-
-            const parts = line.split(';');
-            // Nome;Cognome;Nickname;Domanda;Opzione A;B;C;D;Risposta Corretta;Ringraziamento;Sfondo
-            if (parts.length >= 10) {
+        // Handle CSV parsing robustly to support newlines inside quoted strings
+        let inQuotes = false;
+        let currentRow = [];
+        let currentPart = "";
+        
+        for (let i = 0; i < csvText.length; i++) {
+            let char = csvText[i];
+            
+            if (char === '"') {
+                if (inQuotes && i + 1 < csvText.length && csvText[i+1] === '"') {
+                    // escaped quote ""
+                    currentPart += '"';
+                    i++; // skip the next quote
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ';' && !inQuotes) {
+                currentRow.push(currentPart);
+                currentPart = "";
+            } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                if (char === '\r' && i + 1 < csvText.length && csvText[i+1] === '\n') {
+                    i++;
+                }
+                currentRow.push(currentPart);
+                processRow(currentRow);
+                currentRow = [];
+                currentPart = "";
+            } else {
+                currentPart += char;
+            }
+        }
+        
+        if (currentPart || currentRow.length > 0) {
+            currentRow.push(currentPart);
+            processRow(currentRow);
+        }
+        
+        function processRow(parts) {
+            // Ignore empty rows or header
+            if (parts.length >= 10 && parts[0].trim().toLowerCase() !== "nome" && parts[0].trim() !== "") {
                 database.push({
                     nome: parts[0].trim(),
                     cognome: parts[1].trim(),
